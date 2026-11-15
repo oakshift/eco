@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2F6E3B">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- Only GitHub (data) can be reached; fonts from Google. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self'; connect-src https://api.github.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Eco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+:root{
+  --bg:#EEF2EC; --surface:#FFFFFF; --surface-2:#F5F8F3; --line:#D4DDD2;
+  --ink:#1B261C; --muted:#57695A; --accent:#2F6E3B; --accent-ink:#FFFFFF;
+  --accent-soft:#DAEBDB; --amber:#A8600C; --amber-soft:#F6E6CE;
+  --danger:#A63A2B; --danger-soft:#F4DDD8;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111611; --surface:#182019; --surface-2:#1E281F; --line:#2D3A2E;
+    --ink:#E3EAE3; --muted:#9BAB9C; --accent:#7CC98A; --accent-ink:#0D180F;
+    --accent-soft:#213723; --amber:#E3A24A; --amber-soft:#3A2C17;
+    --danger:#E5826F; --danger-soft:#3C211C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111611; --surface:#182019; --surface-2:#1E281F; --line:#2D3A2E;
+  --ink:#E3EAE3; --muted:#9BAB9C; --accent:#7CC98A; --accent-ink:#0D180F;
+  --accent-soft:#213723; --amber:#E3A24A; --amber-soft:#3A2C17;
+  --danger:#E5826F; --danger-soft:#3C211C;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);padding-inline:16px;padding-block:env(safe-area-inset-top,0px) calc(48px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:1.75rem;letter-spacing:-.01em}
+h2{font-size:1.25rem}
+h3{font-size:1.05rem}
+p{margin:0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-block:20px 12px}
+#status{font-size:.8rem;padding:2px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+#status.ok{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+#status.bad{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--line);margin-bottom:20px}
+nav.tabs button{flex:1 1 0;min-width:0;font:700 .85rem var(--body);padding:10px 6px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+section.tab{display:grid;gap:24px}
+.block{display:grid;gap:10px}
+.block-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px}
+.stat b{font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.1;overflow-wrap:anywhere;color:var(--accent)}
+
+.list{display:grid;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .grow{flex:1;min-width:0;overflow-wrap:anywhere;display:grid;gap:3px}
+.row .title{font-weight:700}
+.empty{padding:16px;color:var(--muted)}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.today{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.row-actions{display:flex;gap:2px;flex:none}
+
+details.more > summary{cursor:pointer;font-weight:700;color:var(--muted);padding:4px 0;list-style-position:inside}
+details.more[open] > summary{margin-bottom:10px}
+
+form.f{display:grid;gap:12px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label.fl{display:grid;gap:4px;font-size:.85rem;font-weight:700;color:var(--muted)}
+input,select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button.btn{font:700 .9rem var(--body);padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.btn.danger{color:var(--danger)}
+button.btn.grande{padding:14px 20px;font-size:1rem}
+button.x{border:0;background:none;color:var(--muted);cursor:pointer;font:700 .8rem var(--body);padding:6px 8px;border-radius:6px}
+button.x:hover{background:var(--surface-2);color:var(--ink)}
+button.x[data-armed]{background:var(--danger);color:#fff}
+
+.barra{height:12px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.barra span{display:block;height:100%;width:0;background:var(--accent);border-radius:99px}
+.grupo-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.grupo-head span{font-variant-numeric:tabular-nums}
+.trajeto{display:inline-flex;align-items:center;gap:2px;padding:0 0 0 8px}
+.trajeto button.x:first-child{padding:6px 4px;color:var(--accent);text-align:left}
+.trajeto .ult{font-weight:400;color:var(--muted)}
+ol.steps{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
+code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.9rem;max-width:calc(100vw - 32px);z-index:20}
+@media (max-width:420px){ .stat{padding:10px} .stat b{font-size:1.2rem} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Eco</h1>
+      <p class="muted small" id="today"></p>
+    </div>
+    <span id="status">Só neste navegador</span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button data-tab="resumo" aria-selected="true">Resumo</button>
+    <button data-tab="bicicleta" aria-selected="false">Bicicleta</button>
+    <button data-tab="definicoes" aria-selected="false">Definições</button>
+  </nav>
+
+  <!-- ============ RESUMO ============ -->
+  <section class="tab" id="tab-resumo">
+    <div class="stats">
+      <div class="stat" id="r-euros"><span class="label">Poupado no mês</span><b>0 €</b></div>
+      <div class="stat" id="r-co2"><span class="label">CO₂ evitado</span><b>0 kg</b></div>
+      <div class="stat" id="r-agua"><span class="label">Água poupada</span><b>0 L</b></div>
+    </div>
+
+    <div class="panel">
+      <div class="block">
+        <h2>Sanita seca</h2>
+        <div class="actions">
+          <button class="btn primary grande" id="s-usei">Usei a sanita seca</button>
+          <span class="small" id="s-hoje"></span>
+          <button class="x" id="s-desfazer" hidden>Desfazer</button>
+        </div>
+        <p class="small" id="s-resumo"></p>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Valores</summary>
+          <form class="f" id="f-sanita" autocomplete="off" style="margin-top:10px">
+            <div class="fields">
+              <label class="fl">Litros por descarga do autoclismo<input id="s-litros" type="number" min="0" step="0.5" inputmode="decimal"></label>
+              <label class="fl">Preço da água (€/m³)<input id="s-preco" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            </div>
+            <p class="muted small">Cada utilização conta uma descarga que não aconteceu. No preço, junte água, saneamento e resíduos por m³ (está na fatura da Águas de Gaia).</p>
+            <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
+          </form>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="block">
+        <div class="block-head"><h2>Bicicleta</h2><button class="x" data-ir="bicicleta">Ver tudo</button></div>
+        <div class="grupo-head"><h3>Meta do mês</h3><span class="small" id="b-meta-txt"></span></div>
+        <div class="barra" role="progressbar" aria-label="Meta de km do mês" aria-valuemin="0" aria-valuemax="100" id="b-meta-barra"><span></span></div>
+        <div id="b-freq-wrap" class="block" hidden>
+          <p class="muted small">Um toque regista a viagem agora. <span id="b-hoje"></span></p>
+          <div class="actions" id="b-trajetos"></div>
+        </div>
+        <p class="small" id="b-sem-freq" hidden>Registe a primeira viagem em <button class="x" data-ir="bicicleta" style="padding:0;color:var(--accent)">Bicicleta</button>; as que repetir passam a ter um botão aqui.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="block">
+        <div class="block-head"><h2>Horta</h2><a class="small" href="../horta/">Abrir o Caderno da Horta</a></div>
+        <p class="small" id="h-resumo"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BICICLETA ============ -->
+  <section class="tab" id="tab-bicicleta" hidden>
+    <p class="small" id="b-total"></p>
+
+    <div class="panel">
+      <form class="f" id="f-bici" autocomplete="off">
+        <h2>Registar uma viagem</h2>
+        <div class="fields">
+          <label class="fl">Data<input id="b-data" type="date" required></label>
+          <label class="fl">Hora<input id="b-hora" type="time"></label>
+          <label class="fl">Distância (km)<input id="b-dist" type="number" min="0.1" step="0.1" inputmode="decimal" required placeholder="0"></label>
+          <label class="fl">Nota<input id="b-nota" placeholder="Ex.: casa → trabalho"></label>
+        </div>
+        <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="b-ida-volta" style="width:auto"> Ida e volta (conta o dobro)</label>
+        <div class="actions"><button class="btn primary" type="submit">Registar</button></div>
+      </form>
+    </div>
+
+    <div class="block">
+      <h2>Viagens</h2>
+      <div class="list" id="b-lista"></div>
+    </div>
+
+    <div class="panel">
+      <div class="actions">
+        <label class="fl" style="max-width:10rem">Meta (km por mês)<input id="b-meta" type="number" min="0" step="5" inputmode="numeric" placeholder="0"></label>
+        <span class="small" id="b-semanas"></span>
+      </div>
+    </div>
+
+    <details class="more block">
+      <summary>Comparação com o carro</summary>
+      <div class="panel">
+        <form class="f" id="f-carro" autocomplete="off">
+          <p class="small" id="b-por-km"></p>
+          <div class="fields">
+            <label class="fl">Carro<input id="b-carro" placeholder="Ex.: Dacia Lodgy"></label>
+            <label class="fl">Combustível<select id="b-comb"><option value="gasoleo">Gasóleo</option><option value="gasolina">Gasolina</option><option value="gpl">GPL</option></select></label>
+            <label class="fl">Consumo na cidade (L/100 km)<input id="b-consumo" type="number" min="0" step="0.1" inputmode="decimal"></label>
+            <label class="fl">Preço do combustível (€/L)<input id="b-preco" type="number" min="0" step="0.001" inputmode="decimal"></label>
+            <label class="fl">Desgaste e manutenção (€/km)<input id="b-extra" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            <label class="fl">Estacionamento por viagem (€)<input id="b-estac" type="number" min="0" step="0.05" inputmode="decimal"></label>
+          </div>
+          <p class="muted small">O CO₂ é calculado pelos litros não gastos: cerca de 2,68 kg por litro de gasóleo, 2,31 de gasolina e 1,66 de GPL (só o escape; valores aproximados). O desgaste inclui pneus, travões, óleo e revisões. As alterações aplicam-se a todas as viagens, também às antigas.</p>
+          <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
+        </form>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ DEFINIÇÕES ============ -->
+  <section class="tab" id="tab-definicoes" hidden>
+    <div class="panel">
+      <form class="f" id="f-cfg" autocomplete="off">
+        <h2>Onde se guardam os dados</h2>
+        <p class="small" id="cfg-estado"></p>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Como criar o token do GitHub</summary>
+          <ol class="steps small">
+            <li>Abra <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+            <li>Dê-lhe um nome, por exemplo <code>eco</code>, e escolha a validade máxima.</li>
+            <li>Em <em>Repository access</em>, escolha <em>Only select repositories</em> e selecione <code>descomplica-dados</code>.</li>
+            <li>Em <em>Permissions → Repository permissions → Contents</em>, escolha <em>Read and write</em>.</li>
+            <li>Carregue em <em>Generate token</em>, copie-o e cole-o aqui. Faça isto em cada dispositivo que usar.</li>
+          </ol>
+          <p class="muted small" style="margin-top:6px">Se o Descomplica já estiver ligado neste navegador, a Eco usa a mesma ligação e não é preciso fazer nada.</p>
+        </details>
+        <div class="fields">
+          <label class="fl">Repositório dos dados<input id="cfg-repo" placeholder="utilizador/descomplica-dados"></label>
+          <label class="fl">Token do GitHub<input id="cfg-token" type="password" placeholder="github_pat_…"></label>
+        </div>
+        <p class="muted small">O token fica guardado só neste navegador.</p>
+        <div class="actions">
+          <button class="btn primary" type="submit">Guardar e ligar</button>
+          <button class="btn danger" type="button" id="btn-desligar">Desligar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div class="block">
+        <h2>Cópia</h2>
+        <div class="actions"><button class="btn" id="btn-backup">Descarregar cópia (.json)</button></div>
+        <p class="muted small">Só a sanita seca e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
+      </div>
+    </div>
+
+    <p class="small"><a href="../descomplica/">Abrir o Descomplica</a></p>
+  </section>
+</div>
+
+<div id="toast" role="status" hidden></div>
+
+<script>
+/* The Eco data lives in the Descomplica data file (keys bicicleta and sanita); every other key is written back untouched. */
+const FILE = "dados.json";
+const DEFAULT_REPO = "oakshift/descomplica-dados";
+
+const vazio = () => ({
+  bicicleta:{carro:{nome:"", combustivel:"gasoleo", consumo:6.5, preco:1.65, extraKm:0.08, estacionamento:0}, trajetos:[], viagens:[], ocultas:[]},
+  sanita:{litros:6, precoM3:2.5, dias:{}}});
+const completo = d => { const v = vazio(), b = d.bicicleta || {};
+  return {...d, bicicleta: {...v.bicicleta, ...b, carro: {...v.bicicleta.carro, ...(b.carro || {})}}, sanita: {...v.sanita, ...(d.sanita || {}), dias: {...(d.sanita?.dias || {})}}}; };
+let S = vazio();
+
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const hoje = () => iso(new Date());
+const mesAtual = () => hoje().slice(0, 7);
+const parse = s => { const [y,m,d] = String(s).split("-").map(Number); return new Date(y, (m||1)-1, d||1); };
+const fmt = (s, opts={day:"numeric",month:"short"}) => s ? parse(s).toLocaleDateString("pt-PT", opts) : "";
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const num = v => Number(String(v ?? "").replace(",", ".")) || 0;
+const euros = n => (Number(n)||0).toLocaleString("pt-PT", {style:"currency", currency:"EUR", maximumFractionDigits: Number(n) % 1 ? 2 : 0});
+const cent = n => euros(Math.round(n * 100) / 100);
+const kg = n => `${(Math.round(n * 10) / 10).toLocaleString("pt-PT")} kg`;
+const km1 = n => (Math.round(n * 10) / 10).toLocaleString("pt-PT");
+const litros = n => n >= 1000 ? `${(Math.round(n / 100) / 10).toLocaleString("pt-PT")} m³` : `${Math.round(n).toLocaleString("pt-PT")} L`;
+const lista = (el, rows, vazioTxt) => { el.innerHTML = rows.length ? rows.join("") : `<div class="empty">${vazioTxt}</div>`; };
+
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2800); }
+function setStatus(txt, cls){ const s = $("#status"); s.textContent = txt; s.className = cls || ""; }
+
+/* ---------- storage: GitHub repo or this browser ---------- */
+const ls = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k){ try { localStorage.removeItem(k); } catch {} }
+};
+/* Same site as the Descomplica, so its connection is reused until one is saved here. */
+let cfg = ls.get("eco-cfg") || ls.get("descomplica-cfg") || {repo: DEFAULT_REPO, token: ""};
+const online = () => !!(cfg.token && cfg.repo);
+/* Only the Eco part is cached here; the rest of the file is always read fresh before saving. */
+const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, _feitos: S._feitos || []});
+
+const b64enc = str => { const b = new TextEncoder().encode(str); let bin = ""; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(bin); };
+const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0)));
+
+class GhError extends Error { constructor(status, msg){ super(msg); this.status = status; } }
+async function gh(method, body, repo = cfg.repo, token = cfg.token){
+  const r = await fetch(`https://api.github.com/repos/${repo}/contents/${FILE}`, {
+    method, cache: "no-store",
+    headers: {"Authorization": `Bearer ${token}`, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(body ? {"Content-Type": "application/json"} : {})},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!r.ok) throw new GhError(r.status, (await r.json().catch(() => ({}))).message || r.statusText);
+  return r.json();
+}
+async function ghLoad(){
+  try { const j = await gh("GET"); return {data: completo(JSON.parse(b64dec(j.content))), sha: j.sha}; }
+  catch (e) { if (e.status === 404) return {data: completo({}), sha: null}; throw e; }
+}
+function ghMsg(e){
+  if (e?.status === 401) return "O token do GitHub não é válido ou expirou.";
+  if (e?.status === 403 || e?.status === 404) return "O token não tem acesso ao repositório dos dados. Confirme o nome e a permissão Contents: Read and write.";
+  return "Sem ligação ao GitHub. Tente outra vez.";
+}
+
+let busy = Promise.resolve();
+/* Apply a change to the freshest copy of the data and save it. Retries once if another device or app saved in between.
+   opts.fila: a quick log (see OPS) that waits in this browser instead of failing when there is no network. */
+function mutate(fn, msg, opts = {}){
+  const run = async () => {
+    if (!online()){ fn(S); guardarCache(); render(); return; }
+    setStatus("A guardar…");
+    for (let attempt = 0; attempt < 2; attempt++){
+      const {data, sha} = await ghLoad();
+      fn(data);
+      try {
+        await gh("PUT", {message: msg || "Atualizar Eco", content: b64enc(JSON.stringify(data, null, 1)), ...(sha ? {sha} : {})});
+        S = data; guardarCache(); render(); setStatus("Guardado no GitHub", "ok"); return;
+      } catch (e) { if (!(e.status === 409 || e.status === 422) || attempt) throw e; }
+    }
+  };
+  busy = busy.then(run, run).catch(e => {
+    if (opts.fila && (!(e instanceof GhError) || e.status >= 500)){ enfileirar(opts.fila); return "fila"; }
+    console.error(e); setStatus("Erro ao guardar", "bad"); toast(online() ? ghMsg(e) : "Não foi possível guardar."); render(); throw e;
+  });
+  return busy;
+}
+
+/* ---------- quick logs without network ---------- */
+/* Named operations with plain arguments, so they can be stored and applied later to the freshest data.
+   d._feitos keeps the ids already applied (shared with the Descomplica), so a log sent twice counts once. */
+const OPS = {
+  sanita(d, {dia, delta}){ const ds = d.sanita.dias, n = Math.max(0, num(ds[dia]) + delta); if (n) ds[dia] = n; else delete ds[dia]; },
+  viagem(d, {v}){
+    const b = d.bicicleta; if (b.viagens.some(x => x.id === v.id)) return;
+    b.viagens.push(v); b.ocultas = (b.ocultas || []).filter(k => k !== chaveViagem(v.nota, v.km));
+  }
+};
+function aplicar(d, o){
+  const f = d._feitos ||= []; if (f.includes(o.id) || !OPS[o.op]) return;
+  OPS[o.op](d, o.args); f.push(o.id); if (f.length > 300) f.splice(0, f.length - 300);
+}
+const fila = () => ls.get("eco-fila") || [];
+/* Logs made offline in the Descomplica before the Eco existed move here once. */
+(() => { const velha = ls.get("descomplica-fila") || [], minhas = velha.filter(o => OPS[o.op]);
+  if (minhas.length){ ls.set("eco-fila", [...fila(), ...minhas]); ls.set("descomplica-fila", velha.filter(o => !OPS[o.op])); } })();
+/* Resolves to "fila" when the log was kept for later. */
+function registar(op, args, msg){
+  const o = {id: uid(), op, args, msg};
+  if (online() && navigator.onLine === false){ enfileirar(o); return Promise.resolve("fila"); }
+  return mutate(d => aplicar(d, o), msg, {fila: o});
+}
+function enfileirar(o){
+  ls.set("eco-fila", [...fila(), o]);
+  aplicar(S, o); guardarCache(); render();
+  toast("Sem rede: fica guardado neste aparelho e é enviado quando houver ligação."); estadoFila();
+}
+function estadoFila(){ const n = fila().length; if (n) setStatus(`${n} por enviar`, "bad"); }
+let enviando = false;
+async function enviarFila(){
+  const f = fila(); if (!f.length || enviando || !online() || navigator.onLine === false) return;
+  enviando = true;
+  try {
+    await mutate(d => f.forEach(o => aplicar(d, o)), f.length === 1 ? f[0].msg : `${f.length} registos feitos sem rede`);
+    const ids = new Set(f.map(o => o.id)); ls.set("eco-fila", fila().filter(o => !ids.has(o.id)));
+    toast(f.length === 1 ? "O registo feito sem rede foi enviado." : `Os ${f.length} registos feitos sem rede foram enviados.`);
+  } catch {} finally { enviando = false; estadoFila(); }
+}
+async function reload(){
+  if (!online()) return;
+  try {
+    setStatus("A sincronizar…"); const {data} = await ghLoad();
+    S = data; fila().forEach(o => aplicar(S, o)); guardarCache(); render(); setStatus("Sincronizado", "ok");
+    enviarFila();
+  }
+  catch (e) { console.error(e); setStatus("Sem ligação", "bad"); if (!fila().length) toast(ghMsg(e)); estadoFila(); }
+}
+window.addEventListener("online", () => reload());
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible"){ reload(); carregarHorta(); } });
+
+/* ---------- tabs ---------- */
+function showTab(name){
+  if (!$(`#tab-${name}`)) name = "resumo";
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  document.querySelectorAll("section.tab").forEach(s => s.hidden = s.id !== `tab-${name}`);
+  ls.set("eco-tab", name);
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => { showTab(b.dataset.tab); window.scrollTo({top:0}); }));
+
+/* ---------- bicicleta: what each trip by bike saved compared with the car ---------- */
+const CO2_LITRO = {gasoleo: 2.68, gasolina: 2.31, gpl: 1.66};
+/* Per trip: fuel not burnt + wear per km + parking. Uses the current car settings, so a change applies to every trip. */
+function poupanca(c, km){
+  const l = km * num(c.consumo) / 100;
+  return {litros: l, euros: l * num(c.preco) + km * num(c.extraKm) + num(c.estacionamento), co2: l * (CO2_LITRO[c.combustivel] || CO2_LITRO.gasoleo)};
+}
+function somaViagens(c, vs){
+  return vs.reduce((t, v) => { const p = poupanca(c, num(v.km)); return {n: t.n + 1, km: t.km + num(v.km), euros: t.euros + p.euros, co2: t.co2 + p.co2, litros: t.litros + p.litros}; }, {n: 0, km: 0, euros: 0, co2: 0, litros: 0});
+}
+/* Trip time: v.hora ("08:32"); older trips registered on the same day take the time they were saved (v.criado). */
+const horaAgora = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function horaViagem(v){
+  if (v.hora) return v.hora;
+  if (!v.criado) return "";
+  const d = new Date(v.criado); return iso(d) === v.data ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : "";
+}
+const momento = v => `${v.data} ${horaViagem(v) || "00:00"}`;
+/* Consecutive weeks (Monday to Sunday) with at least one trip; the current week only breaks the run once it is over. */
+function semanasSeguidas(vs){
+  const seg = d => { const x = parse(d); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return iso(x); };
+  const tem = new Set(vs.map(v => seg(v.data))), w = parse(seg(hoje()));
+  if (!tem.has(iso(w))) w.setDate(w.getDate() - 7);
+  let n = 0; while (tem.has(iso(w))){ n++; w.setDate(w.getDate() - 7); }
+  return n;
+}
+/* Frequent trips: every trip already made (same note and distance) becomes a one-tap button, most repeated first.
+   bicicleta.trajetos (saved by hand in an earlier version) always show; bicicleta.ocultas hides one. */
+const chaveViagem = (nota, km) => `${(nota || "").trim().toLowerCase()}|${num(km)}`;
+function frequentes(b){
+  const m = new Map(), ocultas = new Set(b.ocultas || []);
+  for (const t of b.trajetos) m.set(chaveViagem(t.nome, t.km), {nota: t.nome, km: num(t.km), n: Infinity, ult: ""});
+  for (const v of b.viagens){
+    const k = chaveViagem(v.nota, v.km), x = m.get(k) || {nota: v.nota, km: num(v.km), n: 0, ult: ""};
+    x.n += 1; if (momento(v) > x.ult) { x.ult = momento(v); x.ultV = v; } m.set(k, x);
+  }
+  return [...m].filter(([k]) => !ocultas.has(k)).map(([k, x]) => ({k, ...x, nome: x.nota || "Viagem"}))
+    .sort((a, b) => b.n - a.n || b.ult.localeCompare(a.ult)).slice(0, 6);
+}
+
+/* ---------- horta: harvests from the Caderno da Horta (same site, so its token and cache are in this browser). Read only. ---------- */
+let horta = null;
+const kgTxt = n => `${(Math.round(n * 100) / 100).toLocaleString("pt-PT")} kg`;
+function colhido(prefixo){
+  return (horta?.registos || []).filter(r => r.tipo === "colheita" && String(r.data).startsWith(prefixo))
+    .reduce((t, r) => ({n: t.n + 1, kg: t.kg + num(r.kg), valor: t.valor + num(r.valor)}), {n: 0, kg: 0, valor: 0});
+}
+async function carregarHorta(){
+  const hc = ls.get("horta-cfg");
+  if (hc?.token && hc?.repo){
+    try { horta = JSON.parse(b64dec((await gh("GET", null, hc.repo, hc.token)).content)); render(); return; } catch {}
+  }
+  horta = ls.get("horta-cache"); render();
+}
+
+/* ---------- sanita seca: one tap per use; sanita.dias = {"2026-10-14": 3}. Each use is a flush that did not happen. ---------- */
+function sanitaPoupou(sa, prefixo = ""){
+  const usos = Object.entries(sa.dias).filter(([d]) => d.startsWith(prefixo)).reduce((t, [, n]) => t + num(n), 0), l = usos * num(sa.litros);
+  return {usos, litros: l, euros: l / 1000 * num(sa.precoM3)};
+}
+const usarSanita = delta => registar("sanita", {dia: hoje(), delta}, delta > 0 ? "Sanita seca: +1" : "Sanita seca: desfazer");
+
+/* ---------- render ---------- */
+function render(){
+  const b = S.bicicleta, c = b.carro, sa = S.sanita, m = mesAtual();
+  const mes = somaViagens(c, b.viagens.filter(v => v.data.startsWith(m))), tot = somaViagens(c, b.viagens);
+  const sMes = sanitaPoupou(sa, m), sTot = sanitaPoupou(sa), nHoje = num(sa.dias[hoje()]);
+  const hMes = colhido(m), hAno = colhido(m.slice(0, 4));
+
+  $("#r-euros b").textContent = cent(mes.euros + sMes.euros + hMes.valor);
+  $("#r-co2 b").textContent = kg(mes.co2);
+  $("#r-agua b").textContent = litros(sMes.litros);
+
+  $("#s-hoje").textContent = `Hoje: ${nHoje}`;
+  $("#s-desfazer").hidden = !nHoje;
+  const desde = Object.keys(sa.dias).sort()[0];
+  $("#s-resumo").innerHTML = !sTot.usos ? "Carregue no botão sempre que usar a sanita seca." :
+    `Este mês: ${sMes.usos} ${sMes.usos === 1 ? "vez" : "vezes"}, <strong>${esc(litros(sMes.litros))}</strong> e ${esc(cent(sMes.euros))}. Desde ${esc(fmt(desde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(litros(sTot.litros))}</strong> de água e <strong>${esc(cent(sTot.euros))}</strong>.`;
+  if (!$("#f-sanita").contains(document.activeElement)){ $("#s-litros").value = sa.litros; $("#s-preco").value = sa.precoM3; }
+
+  $("#h-resumo").innerHTML = !horta ? "Neste navegador ainda não há dados da horta. Abra o Caderno da Horta uma vez (ligado ao GitHub) e volte aqui." :
+    !hAno.n ? "Registe as colheitas com o peso no Caderno da Horta para ver aqui quanto valem." :
+    `Este mês: ${esc(kgTxt(hMes.kg))} colhidos, que custariam <strong>${esc(cent(hMes.valor))}</strong> no supermercado. Em ${esc(m.slice(0, 4))}: ${esc(kgTxt(hAno.kg))} e <strong>${esc(cent(hAno.valor))}</strong>.`;
+
+  const meta = num(b.metaKm), pctKm = meta ? Math.min(100, Math.round(mes.km / meta * 100)) : 0;
+  $("#b-meta-txt").textContent = meta ? `${km1(mes.km)} de ${meta} km${pctKm >= 100 ? " · cumprida!" : ""}` : `${km1(mes.km)} km este mês`;
+  $("#b-meta-barra").hidden = !meta; $("#b-meta-barra span").style.width = `${pctKm}%`; $("#b-meta-barra").setAttribute("aria-valuenow", pctKm);
+  if (document.activeElement !== $("#b-meta")) $("#b-meta").value = meta || "";
+  const sem = semanasSeguidas(b.viagens);
+  $("#b-semanas").textContent = sem ? `${sem} ${sem === 1 ? "semana seguida" : "semanas seguidas"} a pedalar` : "";
+
+  const fr = frequentes(b);
+  $("#b-freq-wrap").hidden = !fr.length; $("#b-sem-freq").hidden = !!fr.length;
+  $("#b-trajetos").innerHTML = fr.map(t => { const v = t.ultV, hojeJa = v && v.data === hoje(), h = v ? horaViagem(v) : "";
+    const ult = !v ? "" : hojeJa ? `hoje${h ? " às " + h : ""}` : `última: ${fmt(v.data)}${h ? " " + h : ""}`;
+    return `<span class="chip trajeto ${hojeJa ? "today" : ""}"><button class="x" data-rapida="${esc(t.k)}" title="Registar agora">+ ${esc(t.nome)} · ${esc(String(t.km).replace(".", ","))} km${ult ? `<br><span class="ult">${esc(ult)}</span>` : ""}</button><button class="x" data-oculta="${esc(t.k)}" title="Tirar das frequentes" aria-label="Tirar ${esc(t.nome)} das frequentes">×</button></span>`; }).join("");
+  const viagensHoje = b.viagens.filter(v => v.data === hoje()).sort((a, z) => momento(a).localeCompare(momento(z)));
+  $("#b-hoje").textContent = viagensHoje.length ? `Hoje: ${viagensHoje.map(v => `${v.nota || "viagem"}${horaViagem(v) ? " " + horaViagem(v) : ""}`).join(", ")}.` : "Hoje ainda sem viagens.";
+
+  const inicio = b.viagens.length ? b.viagens.reduce((x, v) => v.data < x ? v.data : x, b.viagens[0].data) : null;
+  $("#b-total").innerHTML = tot.n ? `Desde ${esc(fmt(inicio, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${tot.n} ${tot.n === 1 ? "viagem" : "viagens"}</strong>, ${esc(km1(tot.km))} km, <strong>${esc(cent(tot.euros))}</strong> poupados, ${esc(kg(tot.co2))} de CO₂ e ${esc(km1(tot.litros))} L de combustível que não foram gastos.` : "Registe a primeira viagem de bicicleta para começar a contar.";
+  const vs = [...b.viagens].sort((a, z) => momento(z).localeCompare(momento(a)) || (z.criado || "").localeCompare(a.criado || ""));
+  lista($("#b-lista"), vs.slice(0, 40).map(v => { const p = poupanca(c, num(v.km)); return `<div class="row"><div class="grow"><span class="title">${esc(v.nota || "Viagem de bicicleta")}</span>
+    <div class="meta"><span class="chip ${v.data === hoje() ? "today" : ""}">${esc(v.data === hoje() ? "Hoje" : fmt(v.data))}${horaViagem(v) ? " · " + esc(horaViagem(v)) : ""}</span><span class="chip">${esc(String(v.km).replace(".", ","))} km</span><span class="chip">${esc(cent(p.euros))}</span><span class="chip">${esc(kg(p.co2))} CO₂</span></div></div>
+    <div class="row-actions"><button class="x" data-repete="${esc(v.id)}" title="Registar outra vez hoje">Repetir</button><button class="x" data-tira-viagem="${esc(v.id)}">Apagar</button></div></div>`; }), "Ainda sem viagens.");
+
+  const p1 = poupanca(c, 1);
+  $("#b-por-km").textContent = `Com estes valores, cada km de bicicleta poupa ${euros(Math.round(p1.euros * 1000) / 1000)}${num(c.estacionamento) ? ` (mais ${euros(c.estacionamento)} de estacionamento por viagem)` : ""} e ${Math.round(p1.co2 * 1000)} g de CO₂${c.nome ? ` face ao ${c.nome}` : ""}.`;
+  if (!$("#f-carro").contains(document.activeElement)){
+    $("#b-carro").value = c.nome || ""; $("#b-comb").value = c.combustivel; $("#b-consumo").value = c.consumo; $("#b-preco").value = c.preco; $("#b-extra").value = c.extraKm; $("#b-estac").value = c.estacionamento || 0;
+  }
+}
+
+/* ---------- actions ---------- */
+$("#s-usei").addEventListener("click", () => usarSanita(1).then(r => { if (r !== "fila") toast(`Registado: ${num(S.sanita.litros)} L de água poupados.`); }, () => {}));
+$("#s-desfazer").addEventListener("click", () => usarSanita(-1).catch(() => {}));
+$("#f-sanita").addEventListener("submit", e => {
+  e.preventDefault();
+  const l = num($("#s-litros").value), pr = num($("#s-preco").value);
+  mutate(d => { d.sanita.litros = l; d.sanita.precoM3 = pr; }, "Sanita seca: valores").then(() => { document.activeElement?.blur(); toast("Guardado."); }, () => {});
+});
+
+$("#b-data").value = hoje();
+let horaManual = false;
+$("#b-hora").value = horaAgora();
+$("#b-hora").addEventListener("input", () => horaManual = true);
+/* Starting a new entry later in the day: the time follows the clock unless typed by hand. */
+$("#b-dist").addEventListener("focus", () => { if (!horaManual) $("#b-hora").value = horaAgora(); });
+$("#f-bici").addEventListener("submit", e => {
+  e.preventDefault();
+  const km = Math.round(num($("#b-dist").value) * ($("#b-ida-volta").checked ? 2 : 1) * 10) / 10, data = $("#b-data").value || hoje(), nota = $("#b-nota").value.trim();
+  if (!(km > 0)) return;
+  const hora = $("#b-hora").value || horaAgora();
+  registar("viagem", {v: {id: uid(), data, hora, km, nota, criado: new Date().toISOString()}}, `Bicicleta: ${km} km`).then(r => {
+    const p = poupanca(S.bicicleta.carro, km);
+    $("#b-dist").value = ""; $("#b-nota").value = ""; $("#b-ida-volta").checked = false; $("#b-data").value = hoje(); horaManual = false; $("#b-hora").value = horaAgora();
+    if (r !== "fila") toast(`Boa! ${cent(p.euros)} e ${kg(p.co2)} de CO₂ poupados.`);
+  }, () => {});
+});
+$("#b-meta").addEventListener("change", e => { const v = Math.max(0, Math.round(num(e.target.value))); mutate(d => { d.bicicleta.metaKm = v; }, "Bicicleta: meta do mês").catch(() => {}); });
+$("#f-carro").addEventListener("submit", e => {
+  e.preventDefault();
+  const c = {nome: $("#b-carro").value.trim(), combustivel: $("#b-comb").value, consumo: num($("#b-consumo").value), preco: num($("#b-preco").value), extraKm: num($("#b-extra").value), estacionamento: num($("#b-estac").value)};
+  mutate(d => { d.bicicleta.carro = c; }, "Bicicleta: valores do carro").then(() => { document.activeElement?.blur(); toast("Valores do carro guardados."); }, () => {});
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.ir){ showTab(b.dataset.ir); window.scrollTo({top:0}); }
+  if (b.dataset.rapida || b.dataset.repete){
+    const t = b.dataset.rapida ? frequentes(S.bicicleta).find(x => x.k === b.dataset.rapida) : S.bicicleta.viagens.find(x => x.id === b.dataset.repete);
+    if (!t) return;
+    const nota = t.nota || "", km = num(t.km);
+    registar("viagem", {v: {id: uid(), data: hoje(), hora: horaAgora(), km, nota, criado: new Date().toISOString()}}, `Bicicleta: ${nota || km + " km"}`)
+      .then(r => { if (r === "fila") return; const p = poupanca(S.bicicleta.carro, km); toast(`${nota || "Viagem"}: ${cent(p.euros)} e ${kg(p.co2)} de CO₂ poupados.`); }, () => {});
+  }
+  if (b.dataset.oculta){
+    const k = b.dataset.oculta;
+    mutate(d => { const bi = d.bicicleta; bi.ocultas = [...new Set([...(bi.ocultas || []), k])]; bi.trajetos = bi.trajetos.filter(t => chaveViagem(t.nome, t.km) !== k); }, "Bicicleta: tirar das frequentes").catch(() => {});
+  }
+  if (b.dataset.tiraViagem){
+    if (!b.dataset.armed){ b.dataset.armed = "1"; b.textContent = "Confirmar"; return; }
+    const id = b.dataset.tiraViagem; mutate(d => { d.bicicleta.viagens = d.bicicleta.viagens.filter(v => v.id !== id); }, "Bicicleta: apagar viagem").catch(() => {});
+  }
+});
+
+/* ---------- settings ---------- */
+function renderCfg(){
+  $("#cfg-repo").value = cfg.repo || ""; $("#cfg-token").value = cfg.token || "";
+  $("#cfg-estado").innerHTML = online()
+    ? `Os dados estão no repositório privado <strong>${esc(cfg.repo)}</strong>, junto com os do Descomplica. Cada alteração fica guardada como um commit.`
+    : `Os dados estão <strong>só neste navegador</strong>. Crie um token do GitHub (instruções abaixo) para os guardar no seu repositório privado e os ver em todos os dispositivos.`;
+  $("#btn-desligar").hidden = !cfg.token;
+}
+$("#f-cfg").addEventListener("submit", async e => {
+  e.preventDefault();
+  cfg = {repo: $("#cfg-repo").value.trim().replace(/^https:\/\/github\.com\//, "").replace(/\/$/, "") || DEFAULT_REPO, token: $("#cfg-token").value.trim()};
+  ls.set("eco-cfg", cfg); renderCfg();
+  if (online()){ await reload(); if ($("#status").className === "ok") toast("Ligado ao GitHub."); }
+});
+$("#btn-desligar").addEventListener("click", () => {
+  cfg = {repo: cfg.repo, token: ""}; ls.set("eco-cfg", cfg); renderCfg(); setStatus("Só neste navegador"); toast("Token apagado deste navegador.");
+});
+function baixar(blob, nome){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
+
+/* ---------- start ---------- */
+$("#today").textContent = new Date().toLocaleDateString("pt-PT", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
+/* First visit: start from the Descomplica cache, which held these data before. */
+{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
+showTab(ls.get("eco-tab") || "resumo");
+renderCfg(); render(); estadoFila();
+/* App icon shortcut (manifest): ?acao=sanita registers one use, then the address is cleaned so a reload does not count it again. */
+const acao = new URLSearchParams(location.search).get("acao");
+if (acao) history.replaceState(null, "", location.pathname);
+const depois = () => { if (acao === "sanita"){ showTab("resumo"); $("#s-usei").click(); } };
+if (online()) reload().then(depois); else depois();
+carregarHorta();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+setInterval(render, 10 * 60e3);
+</script>
+</body>
+</html>
