@@ -110,6 +110,10 @@ button.x[data-armed]{background:var(--danger);color:#fff}
 ol.steps{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
 code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.9rem;max-width:calc(100vw - 32px);z-index:20}
+.rapidos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rapidos button.btn{display:grid;gap:2px;text-align:center;padding:14px 10px;font-size:1rem}
+.rapidos .sub{font-weight:400;font-size:.8rem;opacity:.9}
+.stat .cmp{font-size:.75rem;color:var(--muted)}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{font:700 .8rem var(--body);padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
@@ -147,6 +151,21 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
 
   <!-- ============ RESUMO ============ -->
   <section class="tab" id="tab-resumo">
+    <div class="panel">
+      <div class="block">
+        <div class="rapidos">
+          <button class="btn primary" id="s-usei">Usei a sanita seca<span class="sub" id="s-sub"></span></button>
+          <button class="btn primary" id="c-usei">Despejei o balde<span class="sub" id="c-sub"></span></button>
+        </div>
+        <div id="b-freq-wrap" class="block" hidden>
+          <p class="muted small">Bicicleta: um toque regista a viagem agora. <span id="b-hoje"></span></p>
+          <div class="actions" id="b-trajetos"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="panel small" id="r-ano" hidden></p>
+
     <div class="stats">
       <div class="stat" id="r-euros"><span class="label">Poupado no mês</span><b>0 €</b></div>
       <div class="stat" id="r-co2"><span class="label">CO₂ evitado</span><b>0 kg</b></div>
@@ -155,12 +174,10 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
 
     <div class="panel">
       <div class="block">
-        <h2>Sanita seca</h2>
-        <div class="actions">
-          <button class="btn primary grande" id="s-usei">Usei a sanita seca</button>
+        <div class="block-head"><h2>Sanita seca</h2><span>
           <span class="small" id="s-hoje"></span>
           <button class="x" id="s-desfazer" hidden>Desfazer</button>
-        </div>
+        </span></div>
         <p class="small" id="s-resumo"></p>
         <details>
           <summary class="small" style="cursor:pointer;font-weight:700">Valores</summary>
@@ -169,7 +186,9 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
               <label class="fl">Litros por descarga do autoclismo<input id="s-litros" type="number" min="0" step="0.5" inputmode="decimal"></label>
               <label class="fl">Preço da água (€/m³)<input id="s-preco" type="number" min="0" step="0.01" inputmode="decimal"></label>
             </div>
-            <p class="muted small">Cada utilização conta uma descarga que não aconteceu. No preço, junte água, saneamento e resíduos por m³ (está na fatura da Águas de Gaia).</p>
+            <p class="muted small">Cada utilização conta uma descarga que não aconteceu. No preço, junte água, saneamento e resíduos por m³ (está na fatura da Águas de Gaia). Os valores novos contam a partir de hoje; os dias anteriores ficam com os da altura.</p>
+            <p class="muted small" id="s-hist"></p>
+            <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="s-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
             <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
           </form>
         </details>
@@ -178,12 +197,10 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
 
     <div class="panel">
       <div class="block">
-        <h2>Compostor</h2>
-        <div class="actions">
-          <button class="btn primary grande" id="c-usei">Despejei o balde</button>
+        <div class="block-head"><h2>Compostor</h2><span>
           <span class="small" id="c-hoje"></span>
           <button class="x" id="c-desfazer" hidden>Desfazer</button>
-        </div>
+        </span></div>
         <p class="small" id="c-resumo"></p>
         <details>
           <summary class="small" style="cursor:pointer;font-weight:700">Valores</summary>
@@ -192,7 +209,9 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
               <label class="fl">Litros do balde<input id="c-litros" type="number" min="0" step="0.5" inputmode="decimal"></label>
               <label class="fl">Preço do composto comprado (€/L)<input id="c-preco" type="number" min="0" step="0.01" inputmode="decimal"></label>
             </div>
-            <p class="muted small">Valores aproximados. Um litro de restos de cozinha pesa cerca de 0,5 kg. No compostor, o volume reduz-se a cerca de 30 %, e é esse composto que deixa de comprar. Um saco de 50 L custa normalmente 5 a 10 € (0,10 a 0,20 €/L). No aterro, cada kg de restos de comida liberta metano equivalente a cerca de 0,6 kg de CO₂. Em Gaia, a tarifa de resíduos depende da água gasta, por isso a fatura não desce.</p>
+            <p class="muted small">Valores aproximados. Um litro de restos de cozinha pesa cerca de 0,5 kg. No compostor, o volume reduz-se a cerca de 30 %, e é esse composto que deixa de comprar. Um saco de 50 L custa normalmente 5 a 10 € (0,10 a 0,20 €/L). No aterro, cada kg de restos de comida liberta metano equivalente a cerca de 0,6 kg de CO₂. Em Gaia, a tarifa de resíduos depende da água gasta, por isso a fatura não desce. Os valores novos contam a partir de hoje; os dias anteriores ficam com os da altura.</p>
+            <p class="muted small" id="c-hist"></p>
+            <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="c-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
             <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
           </form>
         </details>
@@ -204,11 +223,7 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
         <div class="block-head"><h2>Bicicleta</h2><button class="x" data-ir="bicicleta">Ver tudo</button></div>
         <div class="grupo-head"><h3>Meta do mês</h3><span class="small" id="b-meta-txt"></span></div>
         <div class="barra" role="progressbar" aria-label="Meta de km do mês" aria-valuemin="0" aria-valuemax="100" id="b-meta-barra"><span></span></div>
-        <div id="b-freq-wrap" class="block" hidden>
-          <p class="muted small">Um toque regista a viagem agora. <span id="b-hoje"></span></p>
-          <div class="actions" id="b-trajetos"></div>
-        </div>
-        <p class="small" id="b-sem-freq" hidden>Registe a primeira viagem em <button class="x" data-ir="bicicleta" style="padding:0;color:var(--accent)">Bicicleta</button>; as que repetir passam a ter um botão aqui.</p>
+        <p class="small" id="b-sem-freq" hidden>Registe a primeira viagem em <button class="x" data-ir="bicicleta" style="padding:0;color:var(--accent)">Bicicleta</button>; as que repetir passam a ter um botão no topo.</p>
       </div>
     </div>
 
@@ -264,7 +279,9 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
             <label class="fl">Desgaste e manutenção (€/km)<input id="b-extra" type="number" min="0" step="0.01" inputmode="decimal"></label>
             <label class="fl">Estacionamento por viagem (€)<input id="b-estac" type="number" min="0" step="0.05" inputmode="decimal"></label>
           </div>
-          <p class="muted small">O CO₂ é calculado pelos litros não gastos: cerca de 2,68 kg por litro de gasóleo, 2,31 de gasolina e 1,66 de GPL (só o escape; valores aproximados). O desgaste inclui pneus, travões, óleo e revisões. As alterações aplicam-se a todas as viagens, também às antigas.</p>
+          <p class="muted small">O CO₂ é calculado pelos litros não gastos: cerca de 2,68 kg por litro de gasóleo, 2,31 de gasolina e 1,66 de GPL (só o escape; valores aproximados). O desgaste inclui pneus, travões, óleo e revisões. Os valores novos contam a partir de hoje; as viagens antigas ficam com os valores da altura.</p>
+          <p class="muted small" id="b-hist"></p>
+          <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="b-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
           <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
         </form>
       </div>
@@ -281,6 +298,16 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
         <p class="small" id="g-resumo"></p>
       </div>
     </div>
+    <div class="panel" id="a-painel">
+      <div class="block">
+        <h2 id="a-titulo">O ano</h2>
+        <div class="seg" id="a-anos" role="group" aria-label="Ano"></div>
+        <div class="stats" id="a-stats"></div>
+        <p class="small" id="a-contas"></p>
+        <p class="muted small" id="a-nota"></p>
+      </div>
+    </div>
+
     <details class="more block">
       <summary>Ver tabela</summary>
       <div class="list tabela-wrap" style="padding:4px 6px"><table class="t" id="g-tabela"></table></div>
@@ -486,15 +513,38 @@ function showTab(name){
 }
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => { showTab(b.dataset.tab); window.scrollTo({top:0}); }));
 
+/* ---------- values with a date: obj.hist = [{desde: "2026-11-15", ...values}], oldest first ----------
+   A day uses the newest entry from that day or before; days before the first entry use it too (desde "" = since always).
+   Without hist, the current values apply to every day. */
+const CAMPOS = {carro: ["combustivel", "consumo", "preco", "extraKm", "estacionamento"], sanita: ["litros", "precoM3"], composto: ["litrosBalde", "precoL"]};
+function valoresEm(obj, dia){ const h = obj.hist; if (!h?.length) return obj; let v = h[0]; for (const x of h) if (x.desde <= dia) v = x; return v; }
+function mudarValores(obj, campos, novos, corrigir){
+  const pick = o => Object.fromEntries(campos.map(k => [k, o[k]])), antes = pick(obj);
+  Object.assign(obj, novos);
+  if (corrigir){ delete obj.hist; return; }
+  const depois = pick(obj); if (JSON.stringify(antes) === JSON.stringify(depois)) return;
+  const h = obj.hist ||= [{desde: "", ...antes}], dia = hoje(), i = h.findIndex(x => x.desde === dia), e = {desde: dia, ...depois};
+  if (i >= 0) h[i] = e; else h.push(e);
+}
+/* "antes de 15 de novembro de 2026: 1,59 €/L · desde 15 de novembro de 2026: 1,65 €/L" for the last entries that changed what txt shows. */
+function historicoTxt(obj, txt){
+  const h = (obj.hist || []).filter((x, i, a) => !i || txt(x) !== txt(a[i - 1])); if (h.length < 2) return "";
+  const d = s => fmt(s, {day: "numeric", month: "long", year: "numeric"}), ult = h.slice(-3);
+  return "Valores usados: " + ult.map((x, i) => { const prox = h[h.indexOf(x) + 1];
+    return `${x.desde ? `desde ${d(x.desde)}` : "antes"}${!x.desde && prox ? ` de ${d(prox.desde)}` : ""}: ${txt(x)}`; }).join(" · ") + ".";
+}
+const noPeriodo = (d, p) => typeof p === "function" ? p(String(d)) : String(d).startsWith(p);
+
 /* ---------- bicicleta: what each trip by bike saved compared with the car ---------- */
 const CO2_LITRO = {gasoleo: 2.68, gasolina: 2.31, gpl: 1.66};
-/* Per trip: fuel not burnt + wear per km + parking. Uses the current car settings, so a change applies to every trip. */
+/* Per trip: fuel not burnt + wear per km + parking, with the car values of the trip's day. */
 function poupanca(c, km){
   const l = km * num(c.consumo) / 100;
   return {litros: l, euros: l * num(c.preco) + km * num(c.extraKm) + num(c.estacionamento), co2: l * (CO2_LITRO[c.combustivel] || CO2_LITRO.gasoleo)};
 }
+const poupancaViagem = (c, v) => poupanca(valoresEm(c, v.data), num(v.km));
 function somaViagens(c, vs){
-  return vs.reduce((t, v) => { const p = poupanca(c, num(v.km)); return {n: t.n + 1, km: t.km + num(v.km), euros: t.euros + p.euros, co2: t.co2 + p.co2, litros: t.litros + p.litros}; }, {n: 0, km: 0, euros: 0, co2: 0, litros: 0});
+  return vs.reduce((t, v) => { const p = poupancaViagem(c, v); return {n: t.n + 1, km: t.km + num(v.km), euros: t.euros + p.euros, co2: t.co2 + p.co2, litros: t.litros + p.litros}; }, {n: 0, km: 0, euros: 0, co2: 0, litros: 0});
 }
 /* Trip time: v.hora ("08:32"); older trips registered on the same day take the time they were saved (v.criado). */
 const horaAgora = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
@@ -529,8 +579,8 @@ function frequentes(b){
 /* ---------- horta: harvests from the Caderno da Horta (same site, so its token and cache are in this browser). Read only. ---------- */
 let horta = null;
 const kgTxt = n => `${(Math.round(n * 100) / 100).toLocaleString("pt-PT")} kg`;
-function colhido(prefixo){
-  return (horta?.registos || []).filter(r => r.tipo === "colheita" && String(r.data).startsWith(prefixo))
+function colhido(p){
+  return (horta?.registos || []).filter(r => r.tipo === "colheita" && noPeriodo(r.data, p))
     .reduce((t, r) => ({n: t.n + 1, kg: t.kg + num(r.kg), valor: t.valor + num(r.valor)}), {n: 0, kg: 0, valor: 0});
 }
 async function carregarHorta(){
@@ -542,15 +592,16 @@ async function carregarHorta(){
 }
 
 /* ---------- sanita seca: one tap per use; sanita.dias = {"2026-10-14": 3}. Each use is a flush that did not happen. ---------- */
-function sanitaPoupou(sa, prefixo = ""){
-  const usos = Object.entries(sa.dias).filter(([d]) => d.startsWith(prefixo)).reduce((t, [, n]) => t + num(n), 0), l = usos * num(sa.litros);
-  return {usos, litros: l, euros: l / 1000 * num(sa.precoM3)};
+function sanitaPoupou(sa, p = ""){
+  return Object.entries(sa.dias).filter(([d]) => noPeriodo(d, p)).reduce((t, [d, n]) => { const v = valoresEm(sa, d), l = num(n) * num(v.litros);
+    return {usos: t.usos + num(n), litros: t.litros + l, euros: t.euros + l / 1000 * num(v.precoM3)}; }, {usos: 0, litros: 0, euros: 0});
 }
 /* ---------- compostor: one tap per bucket emptied; composto.dias = {"2026-11-15": 1}. ---------- */
 const KG_POR_L = 0.5, COMPOSTO_FRACAO = 0.3, CO2_KG_RESTOS = 0.6;
-function compostoPoupou(co, prefixo = ""){
-  const baldes = Object.entries(co.dias).filter(([d]) => d.startsWith(prefixo)).reduce((t, [, n]) => t + num(n), 0), l = baldes * num(co.litrosBalde);
-  return {baldes, kg: l * KG_POR_L, composto: l * COMPOSTO_FRACAO, euros: l * COMPOSTO_FRACAO * num(co.precoL), co2: l * KG_POR_L * CO2_KG_RESTOS};
+function compostoPoupou(co, p = ""){
+  return Object.entries(co.dias).filter(([d]) => noPeriodo(d, p)).reduce((t, [d, n]) => { const v = valoresEm(co, d), l = num(n) * num(v.litrosBalde);
+    return {baldes: t.baldes + num(n), kg: t.kg + l * KG_POR_L, composto: t.composto + l * COMPOSTO_FRACAO, euros: t.euros + l * COMPOSTO_FRACAO * num(v.precoL), co2: t.co2 + l * KG_POR_L * CO2_KG_RESTOS}; },
+    {baldes: 0, kg: 0, composto: 0, euros: 0, co2: 0});
 }
 const usarComposto = delta => registar("composto", {dia: hoje(), delta}, delta > 0 ? "Compostor: +1 balde" : "Compostor: desfazer");
 /* When each composter of the Caderno da Horta is ready: 24 months of rest for the dry toilet, about 9 for kitchen scraps. */
@@ -574,18 +625,39 @@ const METRICAS = [
 ];
 const nomeMes = (k, opts) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1).toLocaleDateString("pt-PT", opts);
 const mesCurto = k => nomeMes(k, {month: "short"}).replace(".", "");
+const datasRegistos = () => [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias),
+    ...(horta?.registos || []).filter(r => r.tipo === "colheita").map(r => r.data)].map(d => String(d).slice(0, 10)).filter(d => /^\d{4}-\d{2}/.test(d));
 /* The last 12 months, or fewer: from the first month with any record. */
 function mesesHistorico(){
-  const datas = [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias),
-    ...(horta?.registos || []).filter(r => r.tipo === "colheita").map(r => r.data)].map(d => String(d).slice(0, 7)).filter(d => /^\d{4}-\d{2}$/.test(d));
+  const datas = datasRegistos().map(d => d.slice(0, 7));
   const fim = mesAtual(), ini = datas.length ? datas.reduce((a, b) => a < b ? a : b) : fim, out = [];
   let [y, m] = fim.split("-").map(Number);
   for (let i = 0; i < 12; i++){ const k = `${y}-${pad(m)}`; out.unshift(k); if (k <= ini) break; if (!--m){ m = 12; y--; } }
   return out;
 }
-function doMes(k){
-  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => v.data.startsWith(k))), sa = sanitaPoupou(S.sanita, k), co = compostoPoupou(S.composto, k), h = colhido(k);
-  return {mes: k, euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2, km: b.km, agua: sa.litros, restos: co.kg};
+/* p: a date prefix ("2026-11", "2026") or a test on the date. */
+function doPeriodo(p){
+  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => noPeriodo(v.data, p))), sa = sanitaPoupou(S.sanita, p), co = compostoPoupou(S.composto, p), h = colhido(p);
+  return {euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2, km: b.km, viagens: b.n, agua: sa.litros, usos: sa.usos, restos: co.kg, baldes: co.baldes, colhido: h.kg};
+}
+const doMes = k => ({mes: k, ...doPeriodo(k)});
+
+/* ---------- the year: this year up to today against the same days of last year; a past year against the whole year before ---------- */
+let anoSel = null;
+function renderAno(){
+  const atual = hoje().slice(0, 4), anos = [...new Set([...datasRegistos().map(d => d.slice(0, 4)), atual])].sort();
+  const ano = anos.includes(anoSel) ? anoSel : atual, ant = String(+ano - 1), corrente = ano === atual, md = hoje().slice(5);
+  const ate = a => corrente ? d => d.startsWith(a) && d.slice(5, 10) <= md : a;
+  const cur = doPeriodo(ate(ano)), prev = doPeriodo(ate(ant)), temPrev = Object.values(prev).some(v => v > 0);
+  $("#a-titulo").textContent = corrente ? `O ano de ${ano}, até hoje` : `O ano de ${ano}`;
+  $("#a-anos").hidden = anos.length < 2;
+  $("#a-anos").innerHTML = anos.map(a => `<button type="button" data-ano="${a}" aria-pressed="${a === ano}">${a}</button>`).join("");
+  const tiles = [["Poupado", "euros", cent], ["CO₂ evitado", "co2", kg], ["Bicicleta", "km", v => `${km1(v)} km`], ["Água poupada", "agua", litros], ["Compostado", "restos", kg], ["Colhido", "colhido", kgTxt]];
+  $("#a-stats").innerHTML = tiles.map(([nome, k, f]) => { const c = cur[k], a = prev[k], pct = a > 0 ? Math.round((c - a) / a * 100) : null;
+    return `<div class="stat"><span class="label">${esc(nome)}</span><b>${esc(f(c))}</b>${pct !== null ? `<span class="cmp">${pct >= 0 ? "+" : "−"}${Math.abs(pct)} % face a ${esc(ant)}</span>` : ""}</div>`; }).join("");
+  const n = (v, um, varios) => `${v.toLocaleString("pt-PT")} ${v === 1 ? um : varios}`;
+  $("#a-contas").textContent = `${n(cur.viagens, "viagem", "viagens")} de bicicleta, ${n(cur.usos, "uso", "usos")} da sanita seca e ${n(cur.baldes, "balde", "baldes")} no compostor.`;
+  $("#a-nota").textContent = (corrente ? "De 1 de janeiro até hoje" : "O ano inteiro") + (temPrev ? `, comparado com ${corrente ? `os mesmos dias de ${ant}` : ant}.` : ".");
 }
 /* Clean axis steps: 1, 2, 2.5 or 5 times a power of ten, about three gridlines. */
 function passo(max){ const bruto = max / 3, p = 10 ** Math.floor(Math.log10(bruto)); return [1, 2, 2.5, 5, 10].map(x => x * p).find(x => x >= bruto); }
@@ -593,6 +665,7 @@ const NS = "http://www.w3.org/2000/svg";
 const svgEl = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); return e; };
 function renderEvolucao(){
   if ($("#tab-evolucao").hidden) return;
+  renderAno();
   const M = METRICAS.find(x => x.id === metrica) || METRICAS[0], dados = mesesHistorico().map(doMes), vals = dados.map(d => d[M.id]);
   $("#g-titulo").textContent = M.titulo;
   $("#g-metricas").innerHTML = METRICAS.map(x => `<button type="button" data-metrica="${x.id}" aria-pressed="${x.id === M.id}">${esc(x.nome)}</button>`).join("");
@@ -661,19 +734,21 @@ function render(){
   $("#r-co2 b").textContent = kg(mes.co2 + cMes.co2);
   $("#r-agua b").textContent = litros(sMes.litros);
 
-  $("#s-hoje").textContent = `Hoje: ${nHoje}`;
+  $("#s-hoje").textContent = `Hoje: ${nHoje}`; $("#s-sub").textContent = `hoje: ${nHoje}`;
   $("#s-desfazer").hidden = !nHoje;
   const desde = Object.keys(sa.dias).sort()[0];
   $("#s-resumo").innerHTML = !sTot.usos ? "Carregue no botão sempre que usar a sanita seca." :
     `Este mês: ${sMes.usos} ${sMes.usos === 1 ? "vez" : "vezes"}, <strong>${esc(litros(sMes.litros))}</strong> e ${esc(cent(sMes.euros))}. Desde ${esc(fmt(desde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(litros(sTot.litros))}</strong> de água e <strong>${esc(cent(sTot.euros))}</strong>.`;
   if (!$("#f-sanita").contains(document.activeElement)){ $("#s-litros").value = sa.litros; $("#s-preco").value = sa.precoM3; }
+  $("#s-hist").textContent = historicoTxt(sa, v => `${num(v.litros).toLocaleString("pt-PT")} L por descarga, ${euros(v.precoM3)}/m³`);
 
-  $("#c-hoje").textContent = `Hoje: ${cHoje}`;
+  $("#c-hoje").textContent = `Hoje: ${cHoje}`; $("#c-sub").textContent = `hoje: ${cHoje}`;
   $("#c-desfazer").hidden = !cHoje;
   const cDesde = Object.keys(co.dias).sort()[0];
   $("#c-resumo").innerHTML = !cTot.baldes ? "Carregue no botão sempre que despejar o balde da cozinha no compostor." :
     `Este mês: ${cMes.baldes} ${cMes.baldes === 1 ? "balde" : "baldes"}, <strong>${esc(kg(cMes.kg))}</strong> que não foram para o lixo. Desde ${esc(fmt(cDesde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(kg(cTot.kg))}</strong>, cerca de ${esc(litros(cTot.composto))} de composto (${esc(cent(cTot.euros))}) e ${esc(kg(cTot.co2))} de CO₂.`;
   if (!$("#f-composto").contains(document.activeElement)){ $("#c-litros").value = co.litrosBalde; $("#c-preco").value = co.precoL; }
+  $("#c-hist").textContent = historicoTxt(co, v => `balde de ${num(v.litrosBalde).toLocaleString("pt-PT")} L, ${euros(v.precoL)}/L`);
   const prontos = compostoresProntos();
   $("#h-compostores").hidden = !prontos.length; $("#h-compostores").innerHTML = prontos.length ? `Compostores: ${prontos.join("; ")}.` : "";
 
@@ -699,12 +774,18 @@ function render(){
   const inicio = b.viagens.length ? b.viagens.reduce((x, v) => v.data < x ? v.data : x, b.viagens[0].data) : null;
   $("#b-total").innerHTML = tot.n ? `Desde ${esc(fmt(inicio, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${tot.n} ${tot.n === 1 ? "viagem" : "viagens"}</strong>, ${esc(km1(tot.km))} km, <strong>${esc(cent(tot.euros))}</strong> poupados, ${esc(kg(tot.co2))} de CO₂ e ${esc(km1(tot.litros))} L de combustível que não foram gastos.` : "Registe a primeira viagem de bicicleta para começar a contar.";
   const vs = [...b.viagens].sort((a, z) => momento(z).localeCompare(momento(a)) || (z.criado || "").localeCompare(a.criado || ""));
-  lista($("#b-lista"), vs.slice(0, 40).map(v => { const p = poupanca(c, num(v.km)); return `<div class="row"><div class="grow"><span class="title">${esc(v.nota || "Viagem de bicicleta")}</span>
+  lista($("#b-lista"), vs.slice(0, 40).map(v => { const p = poupancaViagem(c, v); return `<div class="row"><div class="grow"><span class="title">${esc(v.nota || "Viagem de bicicleta")}</span>
     <div class="meta"><span class="chip ${v.data === hoje() ? "today" : ""}">${esc(v.data === hoje() ? "Hoje" : fmt(v.data))}${horaViagem(v) ? " · " + esc(horaViagem(v)) : ""}</span><span class="chip">${esc(String(v.km).replace(".", ","))} km</span><span class="chip">${esc(cent(p.euros))}</span><span class="chip">${esc(kg(p.co2))} CO₂</span></div></div>
     <div class="row-actions"><button class="x" data-repete="${esc(v.id)}" title="Registar outra vez hoje">Repetir</button><button class="x" data-tira-viagem="${esc(v.id)}">Apagar</button></div></div>`; }), "Ainda sem viagens.");
 
   const p1 = poupanca(c, 1);
   $("#b-por-km").textContent = `Com estes valores, cada km de bicicleta poupa ${euros(Math.round(p1.euros * 1000) / 1000)}${num(c.estacionamento) ? ` (mais ${euros(c.estacionamento)} de estacionamento por viagem)` : ""} e ${Math.round(p1.co2 * 1000)} g de CO₂${c.nome ? ` face ao ${c.nome}` : ""}.`;
+  $("#b-hist").textContent = historicoTxt(c, v => `${euros(v.preco)}/L, ${num(v.consumo).toLocaleString("pt-PT")} L/100 km`);
+  /* December and the first half of January: point to the year summary. */
+  const [Y, Mo, D] = hoje().split("-").map(Number), anoFim = Mo === 12 ? Y : Mo === 1 && D <= 15 ? Y - 1 : null;
+  const temAno = anoFim && Object.values(doPeriodo(String(anoFim))).some(v => v > 0);
+  $("#r-ano").hidden = !temAno;
+  if (temAno) $("#r-ano").innerHTML = `O resumo do seu ano de ${anoFim} está pronto. <button class="x" data-ir="evolucao" data-ano="${anoFim}" style="padding:0 4px;color:var(--accent)">Ver o ano</button>`;
   renderEvolucao();
   if (!$("#f-carro").contains(document.activeElement)){
     $("#b-carro").value = c.nome || ""; $("#b-comb").value = c.combustivel; $("#b-consumo").value = c.consumo; $("#b-preco").value = c.preco; $("#b-extra").value = c.extraKm; $("#b-estac").value = c.estacionamento || 0;
@@ -718,13 +799,13 @@ $("#c-usei").addEventListener("click", () => usarComposto(1).then(r => { if (r !
 $("#c-desfazer").addEventListener("click", () => usarComposto(-1).catch(() => {}));
 $("#f-composto").addEventListener("submit", e => {
   e.preventDefault();
-  const l = num($("#c-litros").value), pr = num($("#c-preco").value);
-  mutate(d => { d.composto.litrosBalde = l; d.composto.precoL = pr; }, "Compostor: valores").then(() => { document.activeElement?.blur(); toast("Guardado."); }, () => {});
+  const novos = {litrosBalde: num($("#c-litros").value), precoL: num($("#c-preco").value)}, corrigir = $("#c-corrigir").checked;
+  mutate(d => mudarValores(d.composto, CAMPOS.composto, novos, corrigir), "Compostor: valores").then(() => { $("#c-corrigir").checked = false; document.activeElement?.blur(); toast(corrigir ? "Guardado para todos os registos." : "Guardado a partir de hoje."); }, () => {});
 });
 $("#f-sanita").addEventListener("submit", e => {
   e.preventDefault();
-  const l = num($("#s-litros").value), pr = num($("#s-preco").value);
-  mutate(d => { d.sanita.litros = l; d.sanita.precoM3 = pr; }, "Sanita seca: valores").then(() => { document.activeElement?.blur(); toast("Guardado."); }, () => {});
+  const novos = {litros: num($("#s-litros").value), precoM3: num($("#s-preco").value)}, corrigir = $("#s-corrigir").checked;
+  mutate(d => mudarValores(d.sanita, CAMPOS.sanita, novos, corrigir), "Sanita seca: valores").then(() => { $("#s-corrigir").checked = false; document.activeElement?.blur(); toast(corrigir ? "Guardado para todos os registos." : "Guardado a partir de hoje."); }, () => {});
 });
 
 $("#b-data").value = hoje();
@@ -747,12 +828,14 @@ $("#f-bici").addEventListener("submit", e => {
 $("#b-meta").addEventListener("change", e => { const v = Math.max(0, Math.round(num(e.target.value))); mutate(d => { d.bicicleta.metaKm = v; }, "Bicicleta: meta do mês").catch(() => {}); });
 $("#f-carro").addEventListener("submit", e => {
   e.preventDefault();
-  const c = {nome: $("#b-carro").value.trim(), combustivel: $("#b-comb").value, consumo: num($("#b-consumo").value), preco: num($("#b-preco").value), extraKm: num($("#b-extra").value), estacionamento: num($("#b-estac").value)};
-  mutate(d => { d.bicicleta.carro = c; }, "Bicicleta: valores do carro").then(() => { document.activeElement?.blur(); toast("Valores do carro guardados."); }, () => {});
+  const nome = $("#b-carro").value.trim(), novos = {combustivel: $("#b-comb").value, consumo: num($("#b-consumo").value), preco: num($("#b-preco").value), extraKm: num($("#b-extra").value), estacionamento: num($("#b-estac").value)}, corrigir = $("#b-corrigir").checked;
+  mutate(d => { d.bicicleta.carro.nome = nome; mudarValores(d.bicicleta.carro, CAMPOS.carro, novos, corrigir); }, "Bicicleta: valores do carro")
+    .then(() => { $("#b-corrigir").checked = false; document.activeElement?.blur(); toast(corrigir ? "Valores do carro guardados para todas as viagens." : "Valores do carro guardados a partir de hoje."); }, () => {});
 });
 document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.ir){ showTab(b.dataset.ir); window.scrollTo({top:0}); }
+  if (b.dataset.ano){ anoSel = b.dataset.ano; if (!b.dataset.ir) renderEvolucao(); }
+  if (b.dataset.ir){ showTab(b.dataset.ir); if (b.dataset.ano) $("#a-painel").scrollIntoView(); else window.scrollTo({top:0}); }
   if (b.dataset.rapida || b.dataset.repete){
     const t = b.dataset.rapida ? frequentes(S.bicicleta).find(x => x.k === b.dataset.rapida) : S.bicicleta.viagens.find(x => x.id === b.dataset.repete);
     if (!t) return;
