@@ -110,6 +110,21 @@ button.x[data-armed]{background:var(--danger);color:#fff}
 ol.steps{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
 code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.9rem;max-width:calc(100vw - 32px);z-index:20}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:700 .8rem var(--body);padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.grafico{position:relative}
+.grafico svg{display:block;width:100%;height:auto;font-family:var(--body);overflow:visible}
+.grafico .hit{fill:transparent;cursor:pointer;outline:none}
+.grafico .hit:focus-visible{fill:var(--surface-2)}
+.tip{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.8rem;white-space:nowrap;box-shadow:0 2px 8px rgb(0 0 0 / .12);display:grid}
+.tip b{font-size:.95rem;font-variant-numeric:tabular-nums}
+.tip span{color:var(--muted)}
+.tabela-wrap{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:.85rem;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:6px 8px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t thead th{border-top:0;color:var(--muted);font-weight:700}
 @media (max-width:420px){ .stat{padding:10px} .stat b{font-size:1.2rem} }
 </style>
 </head>
@@ -126,6 +141,7 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
   <nav class="tabs" role="tablist">
     <button data-tab="resumo" aria-selected="true">Resumo</button>
     <button data-tab="bicicleta" aria-selected="false">Bicicleta</button>
+    <button data-tab="evolucao" aria-selected="false">Evolução</button>
     <button data-tab="definicoes" aria-selected="false">Definições</button>
   </nav>
 
@@ -255,6 +271,22 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
     </details>
   </section>
 
+  <!-- ============ EVOLUÇÃO ============ -->
+  <section class="tab" id="tab-evolucao" hidden>
+    <div class="panel">
+      <div class="block">
+        <h2 id="g-titulo">Poupado por mês</h2>
+        <div class="seg" id="g-metricas" role="group" aria-label="O que mostrar"></div>
+        <div class="grafico" id="g-chart"></div>
+        <p class="small" id="g-resumo"></p>
+      </div>
+    </div>
+    <details class="more block">
+      <summary>Ver tabela</summary>
+      <div class="list tabela-wrap" style="padding:4px 6px"><table class="t" id="g-tabela"></table></div>
+    </details>
+  </section>
+
   <!-- ============ DEFINIÇÕES ============ -->
   <section class="tab" id="tab-definicoes" hidden>
     <div class="panel">
@@ -310,7 +342,7 @@ const vazio = () => ({
 const completo = d => { const v = vazio(), b = d.bicicleta || {};
   return {...d, bicicleta: {...v.bicicleta, ...b, carro: {...v.bicicleta.carro, ...(b.carro || {})}}, sanita: {...v.sanita, ...(d.sanita || {}), dias: {...(d.sanita?.dias || {})}},
     composto: {...v.composto, ...(d.composto || {}), dias: {...(d.composto?.dias || {})}}}; };
-let S = vazio();
+let S = vazio(), metrica = "euros";
 
 const $ = (s, r=document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -450,6 +482,7 @@ function showTab(name){
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
   document.querySelectorAll("section.tab").forEach(s => s.hidden = s.id !== `tab-${name}`);
   ls.set("eco-tab", name);
+  if (name === "evolucao") renderEvolucao();
 }
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => { showTab(b.dataset.tab); window.scrollTo({top:0}); }));
 
@@ -531,6 +564,91 @@ function compostoresProntos(){
 }
 const usarSanita = delta => registar("sanita", {dia: hoje(), delta}, delta > 0 ? "Sanita seca: +1" : "Sanita seca: desfazer");
 
+/* ---------- evolução: one measure at a time (they have different units, so never two on one axis) ---------- */
+const METRICAS = [
+  {id: "euros", nome: "Poupado", titulo: "Poupado por mês", unid: "€", f: v => cent(v)},
+  {id: "co2", nome: "CO₂", titulo: "CO₂ evitado por mês", unid: "kg", f: v => kg(v)},
+  {id: "km", nome: "Bicicleta", titulo: "Km de bicicleta por mês", unid: "km", f: v => `${km1(v)} km`},
+  {id: "agua", nome: "Água", titulo: "Água poupada por mês", unid: "L", f: v => litros(v)},
+  {id: "restos", nome: "Compostor", titulo: "Restos no compostor por mês", unid: "kg", f: v => kg(v)}
+];
+const nomeMes = (k, opts) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1).toLocaleDateString("pt-PT", opts);
+const mesCurto = k => nomeMes(k, {month: "short"}).replace(".", "");
+/* The last 12 months, or fewer: from the first month with any record. */
+function mesesHistorico(){
+  const datas = [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias),
+    ...(horta?.registos || []).filter(r => r.tipo === "colheita").map(r => r.data)].map(d => String(d).slice(0, 7)).filter(d => /^\d{4}-\d{2}$/.test(d));
+  const fim = mesAtual(), ini = datas.length ? datas.reduce((a, b) => a < b ? a : b) : fim, out = [];
+  let [y, m] = fim.split("-").map(Number);
+  for (let i = 0; i < 12; i++){ const k = `${y}-${pad(m)}`; out.unshift(k); if (k <= ini) break; if (!--m){ m = 12; y--; } }
+  return out;
+}
+function doMes(k){
+  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => v.data.startsWith(k))), sa = sanitaPoupou(S.sanita, k), co = compostoPoupou(S.composto, k), h = colhido(k);
+  return {mes: k, euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2, km: b.km, agua: sa.litros, restos: co.kg};
+}
+/* Clean axis steps: 1, 2, 2.5 or 5 times a power of ten, about three gridlines. */
+function passo(max){ const bruto = max / 3, p = 10 ** Math.floor(Math.log10(bruto)); return [1, 2, 2.5, 5, 10].map(x => x * p).find(x => x >= bruto); }
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); return e; };
+function renderEvolucao(){
+  if ($("#tab-evolucao").hidden) return;
+  const M = METRICAS.find(x => x.id === metrica) || METRICAS[0], dados = mesesHistorico().map(doMes), vals = dados.map(d => d[M.id]);
+  $("#g-titulo").textContent = M.titulo;
+  $("#g-metricas").innerHTML = METRICAS.map(x => `<button type="button" data-metrica="${x.id}" aria-pressed="${x.id === M.id}">${esc(x.nome)}</button>`).join("");
+
+  const el = $("#g-chart"), W = Math.max(280, el.clientWidth || 600), H = 220, top = 22, bottom = 26;
+  const max = Math.max(...vals), st = max > 0 ? passo(max) : 1, ymax = max > 0 ? Math.ceil(max / st) * st : 3;
+  const ticks = []; for (let v = 0; v <= ymax + st / 1e6; v += st) ticks.push(Math.round(v * 1000) / 1000);
+  const tickTxt = v => v.toLocaleString("pt-PT", {maximumFractionDigits: 2});
+  const left = 10 + 7 * Math.max(...ticks.map(t => tickTxt(t).length)), right = 6;
+  const y = v => top + (H - top - bottom) * (1 - v / ymax), band = (W - left - right) / dados.length, bw = Math.min(24, band * 0.6);
+  const svg = svgEl("svg", {viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": `${M.titulo}, ${dados.length} meses. Os valores estão na tabela.`});
+  for (const t of ticks){
+    svg.append(svgEl("line", {x1: left, x2: W - right, y1: y(t), y2: y(t), stroke: "var(--line)", "stroke-width": 1}));
+    const tx = svgEl("text", {x: left - 6, y: y(t) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--muted)"}); tx.textContent = tickTxt(t); svg.append(tx);
+  }
+  const iMax = vals.indexOf(max), iUlt = dados.length - 1;
+  dados.forEach((d, i) => {
+    const v = vals[i], cx = left + band * (i + 0.5), x0 = cx - bw / 2, y0 = y(0), yv = y(v), h = y0 - yv;
+    if (h > 0.5){
+      const r = Math.min(4, h, bw / 2);
+      svg.append(svgEl("path", {d: `M${x0},${y0}V${yv + r}Q${x0},${yv} ${x0 + r},${yv}H${x0 + bw - r}Q${x0 + bw},${yv} ${x0 + bw},${yv + r}V${y0}Z`, fill: "var(--accent)"}));
+    }
+    const lx = svgEl("text", {x: cx, y: H - 8, "text-anchor": "middle", "font-size": 11, fill: i === iUlt ? "var(--ink)" : "var(--muted)", "font-weight": i === iUlt ? 700 : 400});
+    lx.textContent = mesCurto(d.mes); svg.append(lx);
+    /* Values only on this month and the best month; the rest is in the tooltip and the table. */
+    if (v > 0 && (i === iUlt || i === iMax)){
+      const vt = svgEl("text", {x: cx, y: yv - 6, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: "var(--ink)"}); vt.textContent = M.f(v); svg.append(vt);
+    }
+    const hit = svgEl("rect", {class: "hit", x: left + band * i, y: top - 18, width: band, height: H - top - bottom + 18, tabindex: 0, "aria-label": `${nomeMes(d.mes, {month: "long", year: "numeric"})}: ${M.f(v)}`});
+    const mostra = () => dica(cx, Math.min(yv, y0) - 8, M.f(v), nomeMes(d.mes, {month: "long", year: "numeric"}));
+    hit.addEventListener("pointerenter", mostra); hit.addEventListener("pointerdown", mostra); hit.addEventListener("focus", mostra);
+    hit.addEventListener("pointerleave", () => dica()); hit.addEventListener("blur", () => dica());
+    svg.append(hit);
+  });
+  el.replaceChildren(svg);
+
+  const total = vals.reduce((a, b) => a + b, 0), n = dados.length;
+  $("#g-resumo").textContent = !total ? "Ainda sem registos para mostrar." :
+    `${n === 1 ? "Este mês" : `Nos últimos ${n} meses`}: ${M.f(total)}${n > 1 ? `. Melhor mês: ${nomeMes(dados[iMax].mes, {month: "long"})}, com ${M.f(max)}` : ""}.`;
+
+  const tab = $("#g-tabela"), linha = (cels, tag) => { const tr = document.createElement("tr"); cels.forEach(c => { const td = document.createElement(tag); td.textContent = c; tr.append(td); }); return tr; };
+  const thead = document.createElement("thead"), tbody = document.createElement("tbody");
+  thead.append(linha(["Mês", ...METRICAS.map(x => x.nome)], "th"));
+  [...dados].reverse().forEach(d => tbody.append(linha([`${mesCurto(d.mes)} ${d.mes.slice(0, 4)}`, ...METRICAS.map(x => x.f(d[x.id]))], "td")));
+  tab.replaceChildren(thead, tbody);
+}
+function dica(x, yTop, valor, rotulo){
+  const el = $("#g-chart"); el.querySelector(".tip")?.remove(); if (valor == null) return;
+  const t = document.createElement("div"), b = document.createElement("b"), s = document.createElement("span");
+  t.className = "tip"; b.textContent = valor; s.textContent = rotulo; t.append(b, s);
+  const W = el.clientWidth; t.style.left = `${Math.min(Math.max(x, 60), W - 60)}px`; t.style.top = `${yTop}px`; el.append(t);
+}
+$("#g-metricas").addEventListener("click", e => { const b = e.target.closest("[data-metrica]"); if (!b) return; metrica = b.dataset.metrica; ls.set("eco-metrica", metrica); renderEvolucao(); });
+let redimensionar; window.addEventListener("resize", () => { clearTimeout(redimensionar); redimensionar = setTimeout(renderEvolucao, 150); });
+document.addEventListener("pointerdown", e => { if (!e.target.closest?.("#g-chart")) dica(); });
+
 /* ---------- render ---------- */
 function render(){
   const b = S.bicicleta, c = b.carro, sa = S.sanita, m = mesAtual();
@@ -587,6 +705,7 @@ function render(){
 
   const p1 = poupanca(c, 1);
   $("#b-por-km").textContent = `Com estes valores, cada km de bicicleta poupa ${euros(Math.round(p1.euros * 1000) / 1000)}${num(c.estacionamento) ? ` (mais ${euros(c.estacionamento)} de estacionamento por viagem)` : ""} e ${Math.round(p1.co2 * 1000)} g de CO₂${c.nome ? ` face ao ${c.nome}` : ""}.`;
+  renderEvolucao();
   if (!$("#f-carro").contains(document.activeElement)){
     $("#b-carro").value = c.nome || ""; $("#b-comb").value = c.combustivel; $("#b-consumo").value = c.consumo; $("#b-preco").value = c.preco; $("#b-extra").value = c.extraKm; $("#b-estac").value = c.estacionamento || 0;
   }
@@ -675,6 +794,7 @@ $("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify
 $("#today").textContent = new Date().toLocaleDateString("pt-PT", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
 /* First visit: start from the Descomplica cache, which held these data before. */
 { const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, composto: c.composto, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
+metrica = ls.get("eco-metrica") || "euros";
 showTab(ls.get("eco-tab") || "resumo");
 renderCfg(); render(); estadoFila();
 /* App icon shortcuts (manifest): ?acao=sanita or ?acao=composto registers one, then the address is cleaned so a reload does not count it again. */
