@@ -1,7 +1,7 @@
 {
   "name": "Eco",
   "short_name": "Eco",
-  "description": "Sanita seca, bicicleta e horta: o que se poupa em dinheiro, água e CO₂",
+  "description": "Sanita seca, compostor, bicicleta e horta: o que se poupa em dinheiro, água e CO₂",
   "lang": "pt-PT",
   "start_url": "./",
   "scope": "./",
@@ -9,11 +9,45 @@
   "background_color": "#EEF2EC",
   "theme_color": "#2F6E3B",
   "shortcuts": [
-    {"name": "Usei a sanita seca", "short_name": "Sanita seca", "url": "./?acao=sanita", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]}
+    {
+      "name": "Usei a sanita seca",
+      "short_name": "Sanita seca",
+      "url": "./?acao=sanita",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Despejei o balde no compostor",
+      "short_name": "Compostor",
+      "url": "./?acao=composto",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ],
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
-    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }

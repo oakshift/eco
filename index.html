@@ -162,6 +162,29 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
 
     <div class="panel">
       <div class="block">
+        <h2>Compostor</h2>
+        <div class="actions">
+          <button class="btn primary grande" id="c-usei">Despejei o balde</button>
+          <span class="small" id="c-hoje"></span>
+          <button class="x" id="c-desfazer" hidden>Desfazer</button>
+        </div>
+        <p class="small" id="c-resumo"></p>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Valores</summary>
+          <form class="f" id="f-composto" autocomplete="off" style="margin-top:10px">
+            <div class="fields">
+              <label class="fl">Litros do balde<input id="c-litros" type="number" min="0" step="0.5" inputmode="decimal"></label>
+              <label class="fl">Preço do composto comprado (€/L)<input id="c-preco" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            </div>
+            <p class="muted small">Valores aproximados. Um litro de restos de cozinha pesa cerca de 0,5 kg. No compostor, o volume reduz-se a cerca de 30 %, e é esse composto que deixa de comprar. Um saco de 50 L custa normalmente 5 a 10 € (0,10 a 0,20 €/L). No aterro, cada kg de restos de comida liberta metano equivalente a cerca de 0,6 kg de CO₂. Em Gaia, a tarifa de resíduos depende da água gasta, por isso a fatura não desce.</p>
+            <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
+          </form>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="block">
         <div class="block-head"><h2>Bicicleta</h2><button class="x" data-ir="bicicleta">Ver tudo</button></div>
         <div class="grupo-head"><h3>Meta do mês</h3><span class="small" id="b-meta-txt"></span></div>
         <div class="barra" role="progressbar" aria-label="Meta de km do mês" aria-valuemin="0" aria-valuemax="100" id="b-meta-barra"><span></span></div>
@@ -177,6 +200,7 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
       <div class="block">
         <div class="block-head"><h2>Horta</h2><a class="small" href="../horta/">Abrir o Caderno da Horta</a></div>
         <p class="small" id="h-resumo"></p>
+        <p class="small" id="h-compostores" hidden></p>
       </div>
     </div>
   </section>
@@ -264,7 +288,7 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
       <div class="block">
         <h2>Cópia</h2>
         <div class="actions"><button class="btn" id="btn-backup">Descarregar cópia (.json)</button></div>
-        <p class="muted small">Só a sanita seca e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
+        <p class="muted small">Só a sanita seca, o compostor e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
       </div>
     </div>
 
@@ -275,15 +299,17 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
 <div id="toast" role="status" hidden></div>
 
 <script>
-/* The Eco data lives in the Descomplica data file (keys bicicleta and sanita); every other key is written back untouched. */
+/* The Eco data lives in the Descomplica data file (keys bicicleta, sanita and composto); every other key is written back untouched. */
 const FILE = "dados.json";
 const DEFAULT_REPO = "oakshift/descomplica-dados";
 
 const vazio = () => ({
   bicicleta:{carro:{nome:"", combustivel:"gasoleo", consumo:6.5, preco:1.65, extraKm:0.08, estacionamento:0}, trajetos:[], viagens:[], ocultas:[]},
-  sanita:{litros:6, precoM3:2.5, dias:{}}});
+  sanita:{litros:6, precoM3:2.5, dias:{}},
+  composto:{litrosBalde:5, precoL:0.15, dias:{}}});
 const completo = d => { const v = vazio(), b = d.bicicleta || {};
-  return {...d, bicicleta: {...v.bicicleta, ...b, carro: {...v.bicicleta.carro, ...(b.carro || {})}}, sanita: {...v.sanita, ...(d.sanita || {}), dias: {...(d.sanita?.dias || {})}}}; };
+  return {...d, bicicleta: {...v.bicicleta, ...b, carro: {...v.bicicleta.carro, ...(b.carro || {})}}, sanita: {...v.sanita, ...(d.sanita || {}), dias: {...(d.sanita?.dias || {})}},
+    composto: {...v.composto, ...(d.composto || {}), dias: {...(d.composto?.dias || {})}}}; };
 let S = vazio();
 
 const $ = (s, r=document) => r.querySelector(s);
@@ -316,7 +342,7 @@ const ls = {
 let cfg = ls.get("eco-cfg") || ls.get("descomplica-cfg") || {repo: DEFAULT_REPO, token: ""};
 const online = () => !!(cfg.token && cfg.repo);
 /* Only the Eco part is cached here; the rest of the file is always read fresh before saving. */
-const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, _feitos: S._feitos || []});
+const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, _feitos: S._feitos || []});
 
 const b64enc = str => { const b = new TextEncoder().encode(str); let bin = ""; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(bin); };
 const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0)));
@@ -367,8 +393,10 @@ function mutate(fn, msg, opts = {}){
 /* ---------- quick logs without network ---------- */
 /* Named operations with plain arguments, so they can be stored and applied later to the freshest data.
    d._feitos keeps the ids already applied (shared with the Descomplica), so a log sent twice counts once. */
+const contar = (ds, dia, delta) => { const n = Math.max(0, num(ds[dia]) + delta); if (n) ds[dia] = n; else delete ds[dia]; };
 const OPS = {
-  sanita(d, {dia, delta}){ const ds = d.sanita.dias, n = Math.max(0, num(ds[dia]) + delta); if (n) ds[dia] = n; else delete ds[dia]; },
+  sanita(d, {dia, delta}){ contar(d.sanita.dias, dia, delta); },
+  composto(d, {dia, delta}){ contar(d.composto.dias, dia, delta); },
   viagem(d, {v}){
     const b = d.bicicleta; if (b.viagens.some(x => x.id === v.id)) return;
     b.viagens.push(v); b.ocultas = (b.ocultas || []).filter(k => k !== chaveViagem(v.nota, v.km));
@@ -485,6 +513,22 @@ function sanitaPoupou(sa, prefixo = ""){
   const usos = Object.entries(sa.dias).filter(([d]) => d.startsWith(prefixo)).reduce((t, [, n]) => t + num(n), 0), l = usos * num(sa.litros);
   return {usos, litros: l, euros: l / 1000 * num(sa.precoM3)};
 }
+/* ---------- compostor: one tap per bucket emptied; composto.dias = {"2026-11-15": 1}. ---------- */
+const KG_POR_L = 0.5, COMPOSTO_FRACAO = 0.3, CO2_KG_RESTOS = 0.6;
+function compostoPoupou(co, prefixo = ""){
+  const baldes = Object.entries(co.dias).filter(([d]) => d.startsWith(prefixo)).reduce((t, [, n]) => t + num(n), 0), l = baldes * num(co.litrosBalde);
+  return {baldes, kg: l * KG_POR_L, composto: l * COMPOSTO_FRACAO, euros: l * COMPOSTO_FRACAO * num(co.precoL), co2: l * KG_POR_L * CO2_KG_RESTOS};
+}
+const usarComposto = delta => registar("composto", {dia: hoje(), delta}, delta > 0 ? "Compostor: +1 balde" : "Compostor: desfazer");
+/* When each composter of the Caderno da Horta is ready: 24 months of rest for the dry toilet, about 9 for kitchen scraps. */
+const somaMeses = (s, n) => { const d = parse(s); d.setMonth(d.getMonth() + n); return iso(d); };
+function compostoresProntos(){
+  return (horta?.compostores || []).filter(k => k.estado !== "a encher" && (k.inicioRepouso || k.estado === "pronto" || k.estado === "em uso")).map(k => {
+    if (k.estado === "pronto" || k.estado === "em uso") return `${esc(k.nome)}: pronto`;
+    const sanita = k.tipo === "sanita", quando = somaMeses(k.inicioRepouso, sanita ? 24 : 9), ja = quando <= hoje();
+    return `${esc(k.nome)}: ${ja ? (sanita ? "pode ir para as culturas de fruto" : "deve estar maduro") : `${sanita ? "pronto" : "deve estar maduro"} em ${esc(fmt(quando, {month:"long", year:"numeric"}))}`}`;
+  });
+}
 const usarSanita = delta => registar("sanita", {dia: hoje(), delta}, delta > 0 ? "Sanita seca: +1" : "Sanita seca: desfazer");
 
 /* ---------- render ---------- */
@@ -493,9 +537,10 @@ function render(){
   const mes = somaViagens(c, b.viagens.filter(v => v.data.startsWith(m))), tot = somaViagens(c, b.viagens);
   const sMes = sanitaPoupou(sa, m), sTot = sanitaPoupou(sa), nHoje = num(sa.dias[hoje()]);
   const hMes = colhido(m), hAno = colhido(m.slice(0, 4));
+  const co = S.composto, cMes = compostoPoupou(co, m), cTot = compostoPoupou(co), cHoje = num(co.dias[hoje()]);
 
-  $("#r-euros b").textContent = cent(mes.euros + sMes.euros + hMes.valor);
-  $("#r-co2 b").textContent = kg(mes.co2);
+  $("#r-euros b").textContent = cent(mes.euros + sMes.euros + hMes.valor + cMes.euros);
+  $("#r-co2 b").textContent = kg(mes.co2 + cMes.co2);
   $("#r-agua b").textContent = litros(sMes.litros);
 
   $("#s-hoje").textContent = `Hoje: ${nHoje}`;
@@ -504,6 +549,15 @@ function render(){
   $("#s-resumo").innerHTML = !sTot.usos ? "Carregue no botão sempre que usar a sanita seca." :
     `Este mês: ${sMes.usos} ${sMes.usos === 1 ? "vez" : "vezes"}, <strong>${esc(litros(sMes.litros))}</strong> e ${esc(cent(sMes.euros))}. Desde ${esc(fmt(desde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(litros(sTot.litros))}</strong> de água e <strong>${esc(cent(sTot.euros))}</strong>.`;
   if (!$("#f-sanita").contains(document.activeElement)){ $("#s-litros").value = sa.litros; $("#s-preco").value = sa.precoM3; }
+
+  $("#c-hoje").textContent = `Hoje: ${cHoje}`;
+  $("#c-desfazer").hidden = !cHoje;
+  const cDesde = Object.keys(co.dias).sort()[0];
+  $("#c-resumo").innerHTML = !cTot.baldes ? "Carregue no botão sempre que despejar o balde da cozinha no compostor." :
+    `Este mês: ${cMes.baldes} ${cMes.baldes === 1 ? "balde" : "baldes"}, <strong>${esc(kg(cMes.kg))}</strong> que não foram para o lixo. Desde ${esc(fmt(cDesde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(kg(cTot.kg))}</strong>, cerca de ${esc(litros(cTot.composto))} de composto (${esc(cent(cTot.euros))}) e ${esc(kg(cTot.co2))} de CO₂.`;
+  if (!$("#f-composto").contains(document.activeElement)){ $("#c-litros").value = co.litrosBalde; $("#c-preco").value = co.precoL; }
+  const prontos = compostoresProntos();
+  $("#h-compostores").hidden = !prontos.length; $("#h-compostores").innerHTML = prontos.length ? `Compostores: ${prontos.join("; ")}.` : "";
 
   $("#h-resumo").innerHTML = !horta ? "Neste navegador ainda não há dados da horta. Abra o Caderno da Horta uma vez (ligado ao GitHub) e volte aqui." :
     !hAno.n ? "Registe as colheitas com o peso no Caderno da Horta para ver aqui quanto valem." :
@@ -541,6 +595,13 @@ function render(){
 /* ---------- actions ---------- */
 $("#s-usei").addEventListener("click", () => usarSanita(1).then(r => { if (r !== "fila") toast(`Registado: ${num(S.sanita.litros)} L de água poupados.`); }, () => {}));
 $("#s-desfazer").addEventListener("click", () => usarSanita(-1).catch(() => {}));
+$("#c-usei").addEventListener("click", () => usarComposto(1).then(r => { if (r !== "fila") toast(`Registado: ${kg(num(S.composto.litrosBalde) * KG_POR_L)} de restos fora do lixo.`); }, () => {}));
+$("#c-desfazer").addEventListener("click", () => usarComposto(-1).catch(() => {}));
+$("#f-composto").addEventListener("submit", e => {
+  e.preventDefault();
+  const l = num($("#c-litros").value), pr = num($("#c-preco").value);
+  mutate(d => { d.composto.litrosBalde = l; d.composto.precoL = pr; }, "Compostor: valores").then(() => { document.activeElement?.blur(); toast("Guardado."); }, () => {});
+});
 $("#f-sanita").addEventListener("submit", e => {
   e.preventDefault();
   const l = num($("#s-litros").value), pr = num($("#s-preco").value);
@@ -608,18 +669,18 @@ $("#btn-desligar").addEventListener("click", () => {
   cfg = {repo: cfg.repo, token: ""}; ls.set("eco-cfg", cfg); renderCfg(); setStatus("Só neste navegador"); toast("Token apagado deste navegador.");
 });
 function baixar(blob, nome){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
-$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
+$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
 
 /* ---------- start ---------- */
 $("#today").textContent = new Date().toLocaleDateString("pt-PT", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
 /* First visit: start from the Descomplica cache, which held these data before. */
-{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
+{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, composto: c.composto, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
 showTab(ls.get("eco-tab") || "resumo");
 renderCfg(); render(); estadoFila();
-/* App icon shortcut (manifest): ?acao=sanita registers one use, then the address is cleaned so a reload does not count it again. */
+/* App icon shortcuts (manifest): ?acao=sanita or ?acao=composto registers one, then the address is cleaned so a reload does not count it again. */
 const acao = new URLSearchParams(location.search).get("acao");
 if (acao) history.replaceState(null, "", location.pathname);
-const depois = () => { if (acao === "sanita"){ showTab("resumo"); $("#s-usei").click(); } };
+const depois = () => { const b = {sanita: "#s-usei", composto: "#c-usei"}[acao]; if (b){ showTab("resumo"); $(b).click(); } };
 if (online()) reload().then(depois); else depois();
 carregarHorta();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
