@@ -90,7 +90,7 @@ details.more[open] > summary{margin-bottom:10px}
 form.f{display:grid;gap:12px}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
 label.fl{display:grid;gap:4px;font-size:.85rem;font-weight:700;color:var(--muted)}
-input,select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 button.btn{font:700 .9rem var(--body);padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 button.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -112,6 +112,9 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.9rem;max-width:calc(100vw - 32px);z-index:20}
 .rapidos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rapidos button.btn{display:grid;gap:2px;text-align:center;padding:14px 10px;font-size:1rem}
+.rapidos button.btn.largo{grid-column:1/-1}
+textarea{resize:vertical;min-height:6rem}
+.cesta-lista{white-space:pre-line}
 .rapidos .sub{font-weight:400;font-size:.8rem;opacity:.9}
 .stat .cmp{font-size:.75rem;color:var(--muted)}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
@@ -156,6 +159,7 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
         <div class="rapidos">
           <button class="btn primary" id="s-usei">Usei a sanita seca<span class="sub" id="s-sub"></span></button>
           <button class="btn primary" id="c-usei">Despejei o balde<span class="sub" id="c-sub"></span></button>
+          <button class="btn primary largo" id="f-usei">Levantei a cesta da Fruta Feia<span class="sub" id="f-sub"></span></button>
         </div>
         <div id="b-freq-wrap" class="block" hidden>
           <p class="muted small">Bicicleta: um toque regista a viagem agora. <span id="b-hoje"></span></p>
@@ -212,6 +216,47 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
             <p class="muted small">Valores aproximados. Um litro de restos de cozinha pesa cerca de 0,5 kg. No compostor, o volume reduz-se a cerca de 30 %, e é esse composto que deixa de comprar. Um saco de 50 L custa normalmente 5 a 10 € (0,10 a 0,20 €/L). No aterro, cada kg de restos de comida liberta metano equivalente a cerca de 0,6 kg de CO₂. Em Gaia, a tarifa de resíduos depende da água gasta, por isso a fatura não desce. Os valores novos contam a partir de hoje; os dias anteriores ficam com os da altura.</p>
             <p class="muted small" id="c-hist"></p>
             <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="c-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
+            <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
+          </form>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="block">
+        <div class="block-head"><h2>Fruta Feia</h2><span>
+          <span class="small" id="f-ult"></span>
+          <button class="x" id="f-desfazer" hidden>Desfazer</button>
+        </span></div>
+        <p class="small" id="f-resumo"></p>
+        <p class="small cesta-lista" id="f-lista-txt" hidden></p>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Lista desta cesta</summary>
+          <form class="f" id="f-lista" autocomplete="off" style="margin-top:10px">
+            <label class="fl">Copie a lista da área pessoal da Fruta Feia e cole-a aqui<textarea id="f-lista-in" placeholder="Ex.: Maçã, pera, cenoura…"></textarea></label>
+            <p class="muted small" id="f-lista-dia"></p>
+            <div class="actions"><button class="btn primary" type="submit">Guardar a lista</button></div>
+          </form>
+        </details>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Importar o histórico</summary>
+          <form class="f" id="f-import" autocomplete="off" style="margin-top:10px">
+            <label class="fl">Na área pessoal da Fruta Feia, selecione o histórico todo, copie e cole aqui<textarea id="f-import-in"></textarea></label>
+            <p class="muted small">A app procura as datas no texto e conta uma cesta por data. As linhas com "cancelada" ou "não levantada" ficam de fora, e as datas já registadas não contam duas vezes.</p>
+            <p class="small" id="f-import-prev"></p>
+            <div class="actions"><button class="btn primary" type="submit" id="f-import-btn" disabled>Importar</button></div>
+          </form>
+        </details>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Valores</summary>
+          <form class="f" id="f-fruta" autocomplete="off" style="margin-top:10px">
+            <div class="fields">
+              <label class="fl">Peso da cesta (kg)<input id="f-kg" type="number" min="0" step="0.5" inputmode="decimal"></label>
+              <label class="fl">Preço da cesta (€)<input id="f-preco" type="number" min="0" step="0.01" inputmode="decimal"></label>
+            </div>
+            <p class="muted small">A cesta pequena tem 3 a 4 kg; a grande, 6 a 8 kg. É fruta e legumes que os agricultores deitariam fora por causa do aspeto. O CO₂ usa os números publicados pela Fruta Feia: 7 768 t de CO₂ evitadas por 8 728 t de fruta salva, cerca de 0,89 kg de CO₂ por kg. O preço conta como gasto, não como poupança. Os valores novos contam a partir de hoje; as cestas anteriores ficam com os da altura.</p>
+            <p class="muted small" id="f-hist"></p>
+            <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="f-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
             <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
           </form>
         </details>
@@ -347,7 +392,7 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
       <div class="block">
         <h2>Cópia</h2>
         <div class="actions"><button class="btn" id="btn-backup">Descarregar cópia (.json)</button></div>
-        <p class="muted small">Só a sanita seca, o compostor e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
+        <p class="muted small">Só a sanita seca, o compostor, a Fruta Feia e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
       </div>
     </div>
 
@@ -358,17 +403,19 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
 <div id="toast" role="status" hidden></div>
 
 <script>
-/* The Eco data lives in the Descomplica data file (keys bicicleta, sanita and composto); every other key is written back untouched. */
+/* The Eco data lives in the Descomplica data file (keys bicicleta, sanita, composto and fruta); every other key is written back untouched. */
 const FILE = "dados.json";
 const DEFAULT_REPO = "oakshift/descomplica-dados";
 
 const vazio = () => ({
   bicicleta:{carro:{nome:"", combustivel:"gasoleo", consumo:6.5, preco:1.65, extraKm:0.08, estacionamento:0}, trajetos:[], viagens:[], ocultas:[]},
   sanita:{litros:6, precoM3:2.5, dias:{}},
-  composto:{litrosBalde:5, precoL:0.15, dias:{}}});
+  composto:{litrosBalde:5, precoL:0.15, dias:{}},
+  fruta:{kg:4, preco:4.3, dias:{}, listas:{}}});
 const completo = d => { const v = vazio(), b = d.bicicleta || {};
   return {...d, bicicleta: {...v.bicicleta, ...b, carro: {...v.bicicleta.carro, ...(b.carro || {})}}, sanita: {...v.sanita, ...(d.sanita || {}), dias: {...(d.sanita?.dias || {})}},
-    composto: {...v.composto, ...(d.composto || {}), dias: {...(d.composto?.dias || {})}}}; };
+    composto: {...v.composto, ...(d.composto || {}), dias: {...(d.composto?.dias || {})}},
+    fruta: {...v.fruta, ...(d.fruta || {}), dias: {...(d.fruta?.dias || {})}, listas: {...(d.fruta?.listas || {})}}}; };
 let S = vazio(), metrica = "euros";
 
 const $ = (s, r=document) => r.querySelector(s);
@@ -401,7 +448,7 @@ const ls = {
 let cfg = ls.get("eco-cfg") || ls.get("descomplica-cfg") || {repo: DEFAULT_REPO, token: ""};
 const online = () => !!(cfg.token && cfg.repo);
 /* Only the Eco part is cached here; the rest of the file is always read fresh before saving. */
-const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, _feitos: S._feitos || []});
+const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, fruta: S.fruta, _feitos: S._feitos || []});
 
 const b64enc = str => { const b = new TextEncoder().encode(str); let bin = ""; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(bin); };
 const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0)));
@@ -456,6 +503,7 @@ const contar = (ds, dia, delta) => { const n = Math.max(0, num(ds[dia]) + delta)
 const OPS = {
   sanita(d, {dia, delta}){ contar(d.sanita.dias, dia, delta); },
   composto(d, {dia, delta}){ contar(d.composto.dias, dia, delta); },
+  fruta(d, {dia, delta}){ contar(d.fruta.dias, dia, delta); },
   viagem(d, {v}){
     const b = d.bicicleta; if (b.viagens.some(x => x.id === v.id)) return;
     b.viagens.push(v); b.ocultas = (b.ocultas || []).filter(k => k !== chaveViagem(v.nota, v.km));
@@ -516,7 +564,7 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("cl
 /* ---------- values with a date: obj.hist = [{desde: "2026-11-15", ...values}], oldest first ----------
    A day uses the newest entry from that day or before; days before the first entry use it too (desde "" = since always).
    Without hist, the current values apply to every day. */
-const CAMPOS = {carro: ["combustivel", "consumo", "preco", "extraKm", "estacionamento"], sanita: ["litros", "precoM3"], composto: ["litrosBalde", "precoL"]};
+const CAMPOS = {carro: ["combustivel", "consumo", "preco", "extraKm", "estacionamento"], sanita: ["litros", "precoM3"], composto: ["litrosBalde", "precoL"], fruta: ["kg", "preco"]};
 function valoresEm(obj, dia){ const h = obj.hist; if (!h?.length) return obj; let v = h[0]; for (const x of h) if (x.desde <= dia) v = x; return v; }
 function mudarValores(obj, campos, novos, corrigir){
   const pick = o => Object.fromEntries(campos.map(k => [k, o[k]])), antes = pick(obj);
@@ -613,6 +661,40 @@ function compostoresProntos(){
     return `${esc(k.nome)}: ${ja ? (sanita ? "pode ir para as culturas de fruto" : "deve estar maduro") : `${sanita ? "pronto" : "deve estar maduro"} em ${esc(fmt(quando, {month:"long", year:"numeric"}))}`}`;
   });
 }
+/* ---------- Fruta Feia: one tap per basket collected; fruta.dias = {"2026-11-12": 1}, fruta.listas = {"2026-11-12": "Maçã, …"}. ----------
+   CO₂ from the cooperative's own published totals: 7 768 t CO₂ eq avoided for 8 728 t of produce rescued. */
+const CO2_KG_FRUTA = 7768 / 8728;
+function frutaSalva(fr, p = ""){
+  return Object.entries(fr.dias).filter(([d]) => noPeriodo(d, p)).reduce((t, [d, n]) => { const v = valoresEm(fr, d), k = num(n) * num(v.kg);
+    return {cestas: t.cestas + num(n), kg: t.kg + k, gasto: t.gasto + num(n) * num(v.preco), co2: t.co2 + k * CO2_KG_FRUTA}; }, {cestas: 0, kg: 0, gasto: 0, co2: 0});
+}
+const usarFruta = delta => registar("fruta", {dia: hoje(), delta}, delta > 0 ? "Fruta Feia: +1 cesta" : "Fruta Feia: desfazer");
+const ultimaCesta = () => Object.keys(S.fruta.dias).sort().pop();
+/* Dates in text pasted from the cooperative's site: 12/11/2026, 12-11-26, 2026-11-12, "12 de novembro de 2026", "12 nov. 2026".
+   Lines saying the basket was cancelled or not collected are skipped; future dates too. */
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+function datasNoTexto(txt){
+  const out = new Set(), ok = (y, m, d) => { y = +y < 100 ? 2000 + +y : +y; const x = new Date(y, m - 1, d);
+    if (y >= 2013 && x.getMonth() === m - 1 && x.getDate() === +d && iso(x) <= hoje()) out.add(iso(x)); };
+  for (const linha of String(txt).split(/\n/)){
+    const l = linha.toLowerCase(); if (/cancel|não levant|nao levant|suspens/.test(l)) continue;
+    for (const [, y, m, d] of l.matchAll(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g)) ok(y, +m, +d);
+    for (const [, d, m, y] of l.matchAll(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4}|\d{2})\b/g)) ok(y, +m, +d);
+    for (const [, d, mes, y] of l.matchAll(/\b(\d{1,2})\s*(?:de\s+)?([a-zç]{3})[a-zç]*\.?\s*(?:de\s+)?(\d{4})\b/g)){ const m = MESES.indexOf(mes) + 1; if (m) ok(y, m, +d); }
+  }
+  return [...out].sort();
+}
+let importar = [];
+function preverImport(){
+  const todas = datasNoTexto($("#f-import-in").value), ja = todas.filter(d => S.fruta.dias[d]);
+  importar = todas.filter(d => !S.fruta.dias[d]);
+  const d = s => fmt(s, {day: "numeric", month: "short", year: "numeric"});
+  $("#f-import-prev").textContent = !$("#f-import-in").value.trim() ? "" : !todas.length ? "Não encontrei datas neste texto." :
+    `Encontrei ${todas.length} ${todas.length === 1 ? "data" : "datas"}, de ${d(todas[0])} a ${d(todas.at(-1))}` +
+    (ja.length ? `; ${ja.length} já ${ja.length === 1 ? "estava registada" : "estavam registadas"}` : "") +
+    (importar.length ? `. Fica${importar.length === 1 ? "" : "m"} ${importar.length} ${importar.length === 1 ? "cesta" : "cestas"} por importar (${kg(importar.length * num(S.fruta.kg))}).` : ". Não há nada novo para importar.");
+  $("#f-import-btn").disabled = !importar.length;
+}
 const usarSanita = delta => registar("sanita", {dia: hoje(), delta}, delta > 0 ? "Sanita seca: +1" : "Sanita seca: desfazer");
 
 /* ---------- evolução: one measure at a time (they have different units, so never two on one axis) ---------- */
@@ -621,11 +703,12 @@ const METRICAS = [
   {id: "co2", nome: "CO₂", titulo: "CO₂ evitado por mês", unid: "kg", f: v => kg(v)},
   {id: "km", nome: "Bicicleta", titulo: "Km de bicicleta por mês", unid: "km", f: v => `${km1(v)} km`},
   {id: "agua", nome: "Água", titulo: "Água poupada por mês", unid: "L", f: v => litros(v)},
-  {id: "restos", nome: "Compostor", titulo: "Restos no compostor por mês", unid: "kg", f: v => kg(v)}
+  {id: "restos", nome: "Compostor", titulo: "Restos no compostor por mês", unid: "kg", f: v => kg(v)},
+  {id: "fruta", nome: "Fruta Feia", titulo: "Fruta salva por mês", unid: "kg", f: v => kg(v)}
 ];
 const nomeMes = (k, opts) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1).toLocaleDateString("pt-PT", opts);
 const mesCurto = k => nomeMes(k, {month: "short"}).replace(".", "");
-const datasRegistos = () => [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias),
+const datasRegistos = () => [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias), ...Object.keys(S.fruta.dias),
     ...(horta?.registos || []).filter(r => r.tipo === "colheita").map(r => r.data)].map(d => String(d).slice(0, 10)).filter(d => /^\d{4}-\d{2}/.test(d));
 /* The last 12 months, or fewer: from the first month with any record. */
 function mesesHistorico(){
@@ -637,8 +720,8 @@ function mesesHistorico(){
 }
 /* p: a date prefix ("2026-11", "2026") or a test on the date. */
 function doPeriodo(p){
-  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => noPeriodo(v.data, p))), sa = sanitaPoupou(S.sanita, p), co = compostoPoupou(S.composto, p), h = colhido(p);
-  return {euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2, km: b.km, viagens: b.n, agua: sa.litros, usos: sa.usos, restos: co.kg, baldes: co.baldes, colhido: h.kg};
+  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => noPeriodo(v.data, p))), sa = sanitaPoupou(S.sanita, p), co = compostoPoupou(S.composto, p), h = colhido(p), fr = frutaSalva(S.fruta, p);
+  return {euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2 + fr.co2, km: b.km, viagens: b.n, agua: sa.litros, usos: sa.usos, restos: co.kg, baldes: co.baldes, colhido: h.kg, fruta: fr.kg, cestas: fr.cestas};
 }
 const doMes = k => ({mes: k, ...doPeriodo(k)});
 
@@ -652,11 +735,11 @@ function renderAno(){
   $("#a-titulo").textContent = corrente ? `O ano de ${ano}, até hoje` : `O ano de ${ano}`;
   $("#a-anos").hidden = anos.length < 2;
   $("#a-anos").innerHTML = anos.map(a => `<button type="button" data-ano="${a}" aria-pressed="${a === ano}">${a}</button>`).join("");
-  const tiles = [["Poupado", "euros", cent], ["CO₂ evitado", "co2", kg], ["Bicicleta", "km", v => `${km1(v)} km`], ["Água poupada", "agua", litros], ["Compostado", "restos", kg], ["Colhido", "colhido", kgTxt]];
+  const tiles = [["Poupado", "euros", cent], ["CO₂ evitado", "co2", kg], ["Bicicleta", "km", v => `${km1(v)} km`], ["Água poupada", "agua", litros], ["Compostado", "restos", kg], ["Fruta salva", "fruta", kg], ["Colhido", "colhido", kgTxt]];
   $("#a-stats").innerHTML = tiles.map(([nome, k, f]) => { const c = cur[k], a = prev[k], pct = a > 0 ? Math.round((c - a) / a * 100) : null;
     return `<div class="stat"><span class="label">${esc(nome)}</span><b>${esc(f(c))}</b>${pct !== null ? `<span class="cmp">${pct >= 0 ? "+" : "−"}${Math.abs(pct)} % face a ${esc(ant)}</span>` : ""}</div>`; }).join("");
   const n = (v, um, varios) => `${v.toLocaleString("pt-PT")} ${v === 1 ? um : varios}`;
-  $("#a-contas").textContent = `${n(cur.viagens, "viagem", "viagens")} de bicicleta, ${n(cur.usos, "uso", "usos")} da sanita seca e ${n(cur.baldes, "balde", "baldes")} no compostor.`;
+  $("#a-contas").textContent = `${n(cur.viagens, "viagem", "viagens")} de bicicleta, ${n(cur.usos, "uso", "usos")} da sanita seca, ${n(cur.baldes, "balde", "baldes")} no compostor e ${n(cur.cestas, "cesta", "cestas")} da Fruta Feia.`;
   $("#a-nota").textContent = (corrente ? "De 1 de janeiro até hoje" : "O ano inteiro") + (temPrev ? `, comparado com ${corrente ? `os mesmos dias de ${ant}` : ant}.` : ".");
 }
 /* Clean axis steps: 1, 2, 2.5 or 5 times a power of ten, about three gridlines. */
@@ -729,9 +812,10 @@ function render(){
   const sMes = sanitaPoupou(sa, m), sTot = sanitaPoupou(sa), nHoje = num(sa.dias[hoje()]);
   const hMes = colhido(m), hAno = colhido(m.slice(0, 4));
   const co = S.composto, cMes = compostoPoupou(co, m), cTot = compostoPoupou(co), cHoje = num(co.dias[hoje()]);
+  const fru = S.fruta, fMes = frutaSalva(fru, m), fTot = frutaSalva(fru), fHoje = num(fru.dias[hoje()]), fUlt = ultimaCesta();
 
   $("#r-euros b").textContent = cent(mes.euros + sMes.euros + hMes.valor + cMes.euros);
-  $("#r-co2 b").textContent = kg(mes.co2 + cMes.co2);
+  $("#r-co2 b").textContent = kg(mes.co2 + cMes.co2 + fMes.co2);
   $("#r-agua b").textContent = litros(sMes.litros);
 
   $("#s-hoje").textContent = `Hoje: ${nHoje}`; $("#s-sub").textContent = `hoje: ${nHoje}`;
@@ -749,6 +833,20 @@ function render(){
     `Este mês: ${cMes.baldes} ${cMes.baldes === 1 ? "balde" : "baldes"}, <strong>${esc(kg(cMes.kg))}</strong> que não foram para o lixo. Desde ${esc(fmt(cDesde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(kg(cTot.kg))}</strong>, cerca de ${esc(litros(cTot.composto))} de composto (${esc(cent(cTot.euros))}) e ${esc(kg(cTot.co2))} de CO₂.`;
   if (!$("#f-composto").contains(document.activeElement)){ $("#c-litros").value = co.litrosBalde; $("#c-preco").value = co.precoL; }
   $("#c-hist").textContent = historicoTxt(co, v => `balde de ${num(v.litrosBalde).toLocaleString("pt-PT")} L, ${euros(v.precoL)}/L`);
+  const dLongo = s => fmt(s, {day:"numeric", month:"long", year:"numeric"}), fDesde = Object.keys(fru.dias).sort()[0];
+  $("#f-sub").textContent = fHoje ? "levantada hoje" : fUlt ? `última: ${fmt(fUlt)}` : `${num(fru.kg).toLocaleString("pt-PT")} kg por cesta`;
+  $("#f-ult").textContent = fHoje ? "Hoje: levantada" : fUlt ? `Última: ${fmt(fUlt)}` : "";
+  $("#f-desfazer").hidden = !fHoje;
+  $("#f-resumo").innerHTML = !fTot.cestas ? "Carregue no botão quando levantar a cesta. Para trás, cole o histórico da área pessoal em «Importar o histórico»." :
+    `Este mês: ${fMes.cestas} ${fMes.cestas === 1 ? "cesta" : "cestas"}, <strong>${esc(kg(fMes.kg))}</strong> de fruta e legumes salvos do desperdício (${esc(cent(fMes.gasto))} pagos). Desde ${esc(dLongo(fDesde))}: <strong>${esc(kg(fTot.kg))}</strong> em ${fTot.cestas} ${fTot.cestas === 1 ? "cesta" : "cestas"} e ${esc(kg(fTot.co2))} de CO₂ evitado.`;
+  const lst = fUlt && fru.listas[fUlt];
+  $("#f-lista-txt").hidden = !lst; $("#f-lista-txt").textContent = lst ? `Na cesta de ${fmt(fUlt)}: ${lst}` : "";
+  $("#f-lista-dia").textContent = fUlt ? `Fica junto à cesta de ${dLongo(fUlt)}.` : "Registe primeiro a cesta; a lista fica junto dela.";
+  if (!$("#f-lista").contains(document.activeElement)) $("#f-lista-in").value = lst || "";
+  if (!$("#f-fruta").contains(document.activeElement)){ $("#f-kg").value = fru.kg; $("#f-preco").value = fru.preco; }
+  $("#f-hist").textContent = historicoTxt(fru, v => `${num(v.kg).toLocaleString("pt-PT")} kg, ${euros(v.preco)}`);
+  if ($("#f-import-in").value.trim()) preverImport();
+
   const prontos = compostoresProntos();
   $("#h-compostores").hidden = !prontos.length; $("#h-compostores").innerHTML = prontos.length ? `Compostores: ${prontos.join("; ")}.` : "";
 
@@ -797,6 +895,25 @@ $("#s-usei").addEventListener("click", () => usarSanita(1).then(r => { if (r !==
 $("#s-desfazer").addEventListener("click", () => usarSanita(-1).catch(() => {}));
 $("#c-usei").addEventListener("click", () => usarComposto(1).then(r => { if (r !== "fila") toast(`Registado: ${kg(num(S.composto.litrosBalde) * KG_POR_L)} de restos fora do lixo.`); }, () => {}));
 $("#c-desfazer").addEventListener("click", () => usarComposto(-1).catch(() => {}));
+$("#f-usei").addEventListener("click", () => usarFruta(1).then(r => { if (r !== "fila") toast(`Registado: ${kg(num(S.fruta.kg))} de fruta salva do desperdício.`); }, () => {}));
+$("#f-desfazer").addEventListener("click", () => usarFruta(-1).catch(() => {}));
+$("#f-fruta").addEventListener("submit", e => {
+  e.preventDefault();
+  const novos = {kg: num($("#f-kg").value), preco: num($("#f-preco").value)}, corrigir = $("#f-corrigir").checked;
+  mutate(d => mudarValores(d.fruta, CAMPOS.fruta, novos, corrigir), "Fruta Feia: valores").then(() => { $("#f-corrigir").checked = false; document.activeElement?.blur(); toast(corrigir ? "Guardado para todos os registos." : "Guardado a partir de hoje."); }, () => {});
+});
+$("#f-lista").addEventListener("submit", e => {
+  e.preventDefault();
+  const dia = ultimaCesta(), txt = $("#f-lista-in").value.trim(); if (!dia) return toast("Registe primeiro a cesta.");
+  mutate(d => { if (txt) d.fruta.listas[dia] = txt; else delete d.fruta.listas[dia]; }, "Fruta Feia: lista da cesta").then(() => { document.activeElement?.blur(); toast("Lista guardada."); }, () => {});
+});
+$("#f-import-in").addEventListener("input", preverImport);
+$("#f-import").addEventListener("submit", e => {
+  e.preventDefault();
+  const datas = [...importar]; if (!datas.length) return;
+  mutate(d => datas.forEach(dia => { if (!d.fruta.dias[dia]) d.fruta.dias[dia] = 1; }), `Fruta Feia: importar ${datas.length} cestas`)
+    .then(() => { $("#f-import-in").value = ""; preverImport(); toast(`${datas.length} ${datas.length === 1 ? "cesta importada" : "cestas importadas"}.`); }, () => {});
+});
 $("#f-composto").addEventListener("submit", e => {
   e.preventDefault();
   const novos = {litrosBalde: num($("#c-litros").value), precoL: num($("#c-preco").value)}, corrigir = $("#c-corrigir").checked;
@@ -871,19 +988,19 @@ $("#btn-desligar").addEventListener("click", () => {
   cfg = {repo: cfg.repo, token: ""}; ls.set("eco-cfg", cfg); renderCfg(); setStatus("Só neste navegador"); toast("Token apagado deste navegador.");
 });
 function baixar(blob, nome){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
-$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
+$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, fruta: S.fruta}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
 
 /* ---------- start ---------- */
 $("#today").textContent = new Date().toLocaleDateString("pt-PT", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
 /* First visit: start from the Descomplica cache, which held these data before. */
-{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, composto: c.composto, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
+{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, composto: c.composto, fruta: c.fruta, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
 metrica = ls.get("eco-metrica") || "euros";
 showTab(ls.get("eco-tab") || "resumo");
 renderCfg(); render(); estadoFila();
-/* App icon shortcuts (manifest): ?acao=sanita or ?acao=composto registers one, then the address is cleaned so a reload does not count it again. */
+/* App icon shortcuts (manifest): ?acao=sanita, ?acao=composto or ?acao=fruta registers one, then the address is cleaned so a reload does not count it again. */
 const acao = new URLSearchParams(location.search).get("acao");
 if (acao) history.replaceState(null, "", location.pathname);
-const depois = () => { const b = {sanita: "#s-usei", composto: "#c-usei"}[acao]; if (b){ showTab("resumo"); $(b).click(); } };
+const depois = () => { const b = {sanita: "#s-usei", composto: "#c-usei", fruta: "#f-usei"}[acao]; if (b){ showTab("resumo"); $(b).click(); } };
 if (online()) reload().then(depois); else depois();
 carregarHorta();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
