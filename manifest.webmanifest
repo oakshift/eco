@@ -1,7 +1,7 @@
 {
   "name": "Eco",
   "short_name": "Eco",
-  "description": "Sanita seca, compostor, Fruta Feia, bicicleta e horta: o que se poupa em dinheiro, água e CO₂",
+  "description": "Sanita seca, compostor, Fruta Feia, dias vegan, bicicleta e horta: o que se poupa em dinheiro, água e CO₂",
   "lang": "pt-PT",
   "start_url": "./",
   "scope": "./",
@@ -35,6 +35,17 @@
       "name": "Levantei a cesta da Fruta Feia",
       "short_name": "Fruta Feia",
       "url": "./?acao=fruta",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Hoje foi vegan",
+      "short_name": "Vegan",
+      "url": "./?acao=vegan",
       "icons": [
         {
           "src": "icon-192.png",

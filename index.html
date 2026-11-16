@@ -112,7 +112,7 @@ code{font-size:.85em;background:var(--surface-2);border:1px solid var(--line);bo
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.9rem;max-width:calc(100vw - 32px);z-index:20}
 .rapidos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rapidos button.btn{display:grid;gap:2px;text-align:center;padding:14px 10px;font-size:1rem}
-.rapidos button.btn.largo{grid-column:1/-1}
+.rapidos button.btn.feito{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 textarea{resize:vertical;min-height:6rem}
 .cesta-lista{white-space:pre-line}
 .rapidos .sub{font-weight:400;font-size:.8rem;opacity:.9}
@@ -159,7 +159,8 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
         <div class="rapidos">
           <button class="btn primary" id="s-usei">Usei a sanita seca<span class="sub" id="s-sub"></span></button>
           <button class="btn primary" id="c-usei">Despejei o balde<span class="sub" id="c-sub"></span></button>
-          <button class="btn primary largo" id="f-usei">Levantei a cesta da Fruta Feia<span class="sub" id="f-sub"></span></button>
+          <button class="btn primary" id="f-usei">Levantei a cesta<span class="sub" id="f-sub"></span></button>
+          <button class="btn primary" id="v-usei">Hoje foi vegan<span class="sub" id="v-sub"></span></button>
         </div>
         <div id="b-freq-wrap" class="block" hidden>
           <p class="muted small">Bicicleta: um toque regista a viagem agora. <span id="b-hoje"></span></p>
@@ -216,6 +217,29 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
             <p class="muted small">Valores aproximados. Um litro de restos de cozinha pesa cerca de 0,5 kg. No compostor, o volume reduz-se a cerca de 30 %, e é esse composto que deixa de comprar. Um saco de 50 L custa normalmente 5 a 10 € (0,10 a 0,20 €/L). No aterro, cada kg de restos de comida liberta metano equivalente a cerca de 0,6 kg de CO₂. Em Gaia, a tarifa de resíduos depende da água gasta, por isso a fatura não desce. Os valores novos contam a partir de hoje; os dias anteriores ficam com os da altura.</p>
             <p class="muted small" id="c-hist"></p>
             <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="c-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
+            <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
+          </form>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="block">
+        <div class="block-head"><h2>Dias vegan</h2><span>
+          <span class="small" id="v-hoje"></span>
+          <button class="x" id="v-desfazer" hidden>Desfazer</button>
+        </span></div>
+        <p class="small" id="v-resumo"></p>
+        <p class="small" id="v-ontem-wrap" hidden>Esqueceu-se de ontem? <button class="x" id="v-ontem" style="padding:0 4px;color:var(--accent)">Marcar ontem como vegan</button></p>
+        <details>
+          <summary class="small" style="cursor:pointer;font-weight:700">Valores</summary>
+          <form class="f" id="f-vegan" autocomplete="off" style="margin-top:10px">
+            <div class="fields">
+              <label class="fl">CO₂ evitado por dia vegan (kg)<input id="v-co2" type="number" min="0" step="0.1" inputmode="decimal"></label>
+            </div>
+            <p class="muted small">Segundo um estudo da Universidade de Oxford (Scarborough et al., 2014), uma dieta vegan emite cerca de 2,9 kg de CO₂ por dia, contra 5,6 kg com carne em quantidade média e 7,2 kg com muita carne. Por omissão conta a diferença para a dieta média, 2,7 kg por dia. Os valores novos contam a partir de hoje; os dias anteriores ficam com os da altura.</p>
+            <p class="muted small" id="v-hist"></p>
+            <label class="small" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="v-corrigir" style="width:auto"> Aplicar também aos registos antigos (para corrigir um engano)</label>
             <div class="actions"><button class="btn primary" type="submit">Guardar</button></div>
           </form>
         </details>
@@ -392,7 +416,7 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
       <div class="block">
         <h2>Cópia</h2>
         <div class="actions"><button class="btn" id="btn-backup">Descarregar cópia (.json)</button></div>
-        <p class="muted small">Só a sanita seca, o compostor, a Fruta Feia e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
+        <p class="muted small">Só a sanita seca, o compostor, a Fruta Feia, os dias vegan e a bicicleta. A horta tem a cópia no Caderno da Horta.</p>
       </div>
     </div>
 
@@ -403,7 +427,7 @@ table.t thead th{border-top:0;color:var(--muted);font-weight:700}
 <div id="toast" role="status" hidden></div>
 
 <script>
-/* The Eco data lives in the Descomplica data file (keys bicicleta, sanita, composto and fruta); every other key is written back untouched. */
+/* The Eco data lives in the Descomplica data file (keys bicicleta, sanita, composto, fruta and vegan); every other key is written back untouched. */
 const FILE = "dados.json";
 const DEFAULT_REPO = "oakshift/descomplica-dados";
 
@@ -411,11 +435,13 @@ const vazio = () => ({
   bicicleta:{carro:{nome:"", combustivel:"gasoleo", consumo:6.5, preco:1.65, extraKm:0.08, estacionamento:0}, trajetos:[], viagens:[], ocultas:[]},
   sanita:{litros:6, precoM3:2.5, dias:{}},
   composto:{litrosBalde:5, precoL:0.15, dias:{}},
-  fruta:{kg:4, preco:4.3, dias:{}, listas:{}}});
+  fruta:{kg:4, preco:4.3, dias:{}, listas:{}},
+  vegan:{co2Dia:2.7, dias:{}}});
 const completo = d => { const v = vazio(), b = d.bicicleta || {};
   return {...d, bicicleta: {...v.bicicleta, ...b, carro: {...v.bicicleta.carro, ...(b.carro || {})}}, sanita: {...v.sanita, ...(d.sanita || {}), dias: {...(d.sanita?.dias || {})}},
     composto: {...v.composto, ...(d.composto || {}), dias: {...(d.composto?.dias || {})}},
-    fruta: {...v.fruta, ...(d.fruta || {}), dias: {...(d.fruta?.dias || {})}, listas: {...(d.fruta?.listas || {})}}}; };
+    fruta: {...v.fruta, ...(d.fruta || {}), dias: {...(d.fruta?.dias || {})}, listas: {...(d.fruta?.listas || {})}},
+    vegan: {...v.vegan, ...(d.vegan || {}), dias: {...(d.vegan?.dias || {})}}}; };
 let S = vazio(), metrica = "euros";
 
 const $ = (s, r=document) => r.querySelector(s);
@@ -448,7 +474,7 @@ const ls = {
 let cfg = ls.get("eco-cfg") || ls.get("descomplica-cfg") || {repo: DEFAULT_REPO, token: ""};
 const online = () => !!(cfg.token && cfg.repo);
 /* Only the Eco part is cached here; the rest of the file is always read fresh before saving. */
-const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, fruta: S.fruta, _feitos: S._feitos || []});
+const guardarCache = () => ls.set("eco-cache", {bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, fruta: S.fruta, vegan: S.vegan, _feitos: S._feitos || []});
 
 const b64enc = str => { const b = new TextEncoder().encode(str); let bin = ""; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(bin); };
 const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0)));
@@ -504,6 +530,7 @@ const OPS = {
   sanita(d, {dia, delta}){ contar(d.sanita.dias, dia, delta); },
   composto(d, {dia, delta}){ contar(d.composto.dias, dia, delta); },
   fruta(d, {dia, delta}){ contar(d.fruta.dias, dia, delta); },
+  vegan(d, {dia, sim}){ if (sim) d.vegan.dias[dia] = 1; else delete d.vegan.dias[dia]; },
   viagem(d, {v}){
     const b = d.bicicleta; if (b.viagens.some(x => x.id === v.id)) return;
     b.viagens.push(v); b.ocultas = (b.ocultas || []).filter(k => k !== chaveViagem(v.nota, v.km));
@@ -564,7 +591,7 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("cl
 /* ---------- values with a date: obj.hist = [{desde: "2026-11-15", ...values}], oldest first ----------
    A day uses the newest entry from that day or before; days before the first entry use it too (desde "" = since always).
    Without hist, the current values apply to every day. */
-const CAMPOS = {carro: ["combustivel", "consumo", "preco", "extraKm", "estacionamento"], sanita: ["litros", "precoM3"], composto: ["litrosBalde", "precoL"], fruta: ["kg", "preco"]};
+const CAMPOS = {carro: ["combustivel", "consumo", "preco", "extraKm", "estacionamento"], sanita: ["litros", "precoM3"], composto: ["litrosBalde", "precoL"], fruta: ["kg", "preco"], vegan: ["co2Dia"]};
 function valoresEm(obj, dia){ const h = obj.hist; if (!h?.length) return obj; let v = h[0]; for (const x of h) if (x.desde <= dia) v = x; return v; }
 function mudarValores(obj, campos, novos, corrigir){
   const pick = o => Object.fromEntries(campos.map(k => [k, o[k]])), antes = pick(obj);
@@ -695,6 +722,18 @@ function preverImport(){
     (importar.length ? `. Fica${importar.length === 1 ? "" : "m"} ${importar.length} ${importar.length === 1 ? "cesta" : "cestas"} por importar (${kg(importar.length * num(S.fruta.kg))}).` : ". Não há nada novo para importar.");
   $("#f-import-btn").disabled = !importar.length;
 }
+/* ---------- dias vegan: one tap a day; vegan.dias = {"2026-11-16": 1}. Only the days that went well count; nothing is said about the others. ---------- */
+function veganContas(ve, p = ""){
+  return Object.keys(ve.dias).filter(d => noPeriodo(d, p)).reduce((t, d) => ({dias: t.dias + 1, co2: t.co2 + num(valoresEm(ve, d).co2Dia)}), {dias: 0, co2: 0});
+}
+const ontem = () => { const d = new Date(); d.setDate(d.getDate() - 1); return iso(d); };
+const marcarVegan = (dia, sim) => registar("vegan", {dia, sim}, sim ? `Dia vegan: ${dia}` : `Dia vegan: desfazer ${dia}`);
+/* Days in a row up to yesterday, plus today once it is marked: an unmarked today does not break the run yet. */
+function veganSeguidos(ve){
+  const d = new Date(); if (!ve.dias[iso(d)]) d.setDate(d.getDate() - 1);
+  let n = 0; while (ve.dias[iso(d)]){ n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
 const usarSanita = delta => registar("sanita", {dia: hoje(), delta}, delta > 0 ? "Sanita seca: +1" : "Sanita seca: desfazer");
 
 /* ---------- evolução: one measure at a time (they have different units, so never two on one axis) ---------- */
@@ -704,11 +743,12 @@ const METRICAS = [
   {id: "km", nome: "Bicicleta", titulo: "Km de bicicleta por mês", unid: "km", f: v => `${km1(v)} km`},
   {id: "agua", nome: "Água", titulo: "Água poupada por mês", unid: "L", f: v => litros(v)},
   {id: "restos", nome: "Compostor", titulo: "Restos no compostor por mês", unid: "kg", f: v => kg(v)},
-  {id: "fruta", nome: "Fruta Feia", titulo: "Fruta salva por mês", unid: "kg", f: v => kg(v)}
+  {id: "fruta", nome: "Fruta Feia", titulo: "Fruta salva por mês", unid: "kg", f: v => kg(v)},
+  {id: "vegan", nome: "Vegan", titulo: "Dias vegan por mês", unid: "dias", f: v => `${v} ${v === 1 ? "dia" : "dias"}`}
 ];
 const nomeMes = (k, opts) => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, 1).toLocaleDateString("pt-PT", opts);
 const mesCurto = k => nomeMes(k, {month: "short"}).replace(".", "");
-const datasRegistos = () => [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias), ...Object.keys(S.fruta.dias),
+const datasRegistos = () => [...S.bicicleta.viagens.map(v => v.data), ...Object.keys(S.sanita.dias), ...Object.keys(S.composto.dias), ...Object.keys(S.fruta.dias), ...Object.keys(S.vegan.dias),
     ...(horta?.registos || []).filter(r => r.tipo === "colheita").map(r => r.data)].map(d => String(d).slice(0, 10)).filter(d => /^\d{4}-\d{2}/.test(d));
 /* The last 12 months, or fewer: from the first month with any record. */
 function mesesHistorico(){
@@ -720,8 +760,8 @@ function mesesHistorico(){
 }
 /* p: a date prefix ("2026-11", "2026") or a test on the date. */
 function doPeriodo(p){
-  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => noPeriodo(v.data, p))), sa = sanitaPoupou(S.sanita, p), co = compostoPoupou(S.composto, p), h = colhido(p), fr = frutaSalva(S.fruta, p);
-  return {euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2 + fr.co2, km: b.km, viagens: b.n, agua: sa.litros, usos: sa.usos, restos: co.kg, baldes: co.baldes, colhido: h.kg, fruta: fr.kg, cestas: fr.cestas};
+  const b = somaViagens(S.bicicleta.carro, S.bicicleta.viagens.filter(v => noPeriodo(v.data, p))), sa = sanitaPoupou(S.sanita, p), co = compostoPoupou(S.composto, p), h = colhido(p), fr = frutaSalva(S.fruta, p), ve = veganContas(S.vegan, p);
+  return {euros: b.euros + sa.euros + co.euros + h.valor, co2: b.co2 + co.co2 + fr.co2 + ve.co2, vegan: ve.dias, km: b.km, viagens: b.n, agua: sa.litros, usos: sa.usos, restos: co.kg, baldes: co.baldes, colhido: h.kg, fruta: fr.kg, cestas: fr.cestas};
 }
 const doMes = k => ({mes: k, ...doPeriodo(k)});
 
@@ -735,11 +775,11 @@ function renderAno(){
   $("#a-titulo").textContent = corrente ? `O ano de ${ano}, até hoje` : `O ano de ${ano}`;
   $("#a-anos").hidden = anos.length < 2;
   $("#a-anos").innerHTML = anos.map(a => `<button type="button" data-ano="${a}" aria-pressed="${a === ano}">${a}</button>`).join("");
-  const tiles = [["Poupado", "euros", cent], ["CO₂ evitado", "co2", kg], ["Bicicleta", "km", v => `${km1(v)} km`], ["Água poupada", "agua", litros], ["Compostado", "restos", kg], ["Fruta salva", "fruta", kg], ["Colhido", "colhido", kgTxt]];
+  const tiles = [["Poupado", "euros", cent], ["CO₂ evitado", "co2", kg], ["Bicicleta", "km", v => `${km1(v)} km`], ["Água poupada", "agua", litros], ["Compostado", "restos", kg], ["Fruta salva", "fruta", kg], ["Colhido", "colhido", kgTxt], ["Dias vegan", "vegan", v => String(v)]];
   $("#a-stats").innerHTML = tiles.map(([nome, k, f]) => { const c = cur[k], a = prev[k], pct = a > 0 ? Math.round((c - a) / a * 100) : null;
     return `<div class="stat"><span class="label">${esc(nome)}</span><b>${esc(f(c))}</b>${pct !== null ? `<span class="cmp">${pct >= 0 ? "+" : "−"}${Math.abs(pct)} % face a ${esc(ant)}</span>` : ""}</div>`; }).join("");
   const n = (v, um, varios) => `${v.toLocaleString("pt-PT")} ${v === 1 ? um : varios}`;
-  $("#a-contas").textContent = `${n(cur.viagens, "viagem", "viagens")} de bicicleta, ${n(cur.usos, "uso", "usos")} da sanita seca, ${n(cur.baldes, "balde", "baldes")} no compostor e ${n(cur.cestas, "cesta", "cestas")} da Fruta Feia.`;
+  $("#a-contas").textContent = `${n(cur.viagens, "viagem", "viagens")} de bicicleta, ${n(cur.usos, "uso", "usos")} da sanita seca, ${n(cur.baldes, "balde", "baldes")} no compostor, ${n(cur.cestas, "cesta", "cestas")} da Fruta Feia e ${n(cur.vegan, "dia vegan", "dias vegan")}.`;
   $("#a-nota").textContent = (corrente ? "De 1 de janeiro até hoje" : "O ano inteiro") + (temPrev ? `, comparado com ${corrente ? `os mesmos dias de ${ant}` : ant}.` : ".");
 }
 /* Clean axis steps: 1, 2, 2.5 or 5 times a power of ten, about three gridlines. */
@@ -812,10 +852,11 @@ function render(){
   const sMes = sanitaPoupou(sa, m), sTot = sanitaPoupou(sa), nHoje = num(sa.dias[hoje()]);
   const hMes = colhido(m), hAno = colhido(m.slice(0, 4));
   const co = S.composto, cMes = compostoPoupou(co, m), cTot = compostoPoupou(co), cHoje = num(co.dias[hoje()]);
+  const ve = S.vegan, vMes = veganContas(ve, m), vTot = veganContas(ve), vHoje = !!ve.dias[hoje()], vSeg = veganSeguidos(ve);
   const fru = S.fruta, fMes = frutaSalva(fru, m), fTot = frutaSalva(fru), fHoje = num(fru.dias[hoje()]), fUlt = ultimaCesta();
 
   $("#r-euros b").textContent = cent(mes.euros + sMes.euros + hMes.valor + cMes.euros);
-  $("#r-co2 b").textContent = kg(mes.co2 + cMes.co2 + fMes.co2);
+  $("#r-co2 b").textContent = kg(mes.co2 + cMes.co2 + fMes.co2 + vMes.co2);
   $("#r-agua b").textContent = litros(sMes.litros);
 
   $("#s-hoje").textContent = `Hoje: ${nHoje}`; $("#s-sub").textContent = `hoje: ${nHoje}`;
@@ -833,6 +874,16 @@ function render(){
     `Este mês: ${cMes.baldes} ${cMes.baldes === 1 ? "balde" : "baldes"}, <strong>${esc(kg(cMes.kg))}</strong> que não foram para o lixo. Desde ${esc(fmt(cDesde, {day:"numeric", month:"long", year:"numeric"}))}: <strong>${esc(kg(cTot.kg))}</strong>, cerca de ${esc(litros(cTot.composto))} de composto (${esc(cent(cTot.euros))}) e ${esc(kg(cTot.co2))} de CO₂.`;
   if (!$("#f-composto").contains(document.activeElement)){ $("#c-litros").value = co.litrosBalde; $("#c-preco").value = co.precoL; }
   $("#c-hist").textContent = historicoTxt(co, v => `balde de ${num(v.litrosBalde).toLocaleString("pt-PT")} L, ${euros(v.precoL)}/L`);
+  $("#v-usei").classList.toggle("feito", vHoje);
+  $("#v-sub").textContent = vHoje ? "marcado" : vSeg ? `${vSeg} ${vSeg === 1 ? "dia seguido" : "dias seguidos"}` : `${vMes.dias} este mês`;
+  $("#v-hoje").textContent = vHoje ? "Hoje: vegan" : ""; $("#v-desfazer").hidden = !vHoje;
+  const diaMes = +hoje().slice(8), vDesde = Object.keys(ve.dias).sort()[0];
+  $("#v-resumo").innerHTML = !vTot.dias ? "Ao fim do dia, se foi vegan, carregue em «Hoje foi vegan». Só contam os dias que correm bem." :
+    `Este mês: <strong>${vMes.dias} de ${diaMes} ${diaMes === 1 ? "dia" : "dias"}</strong>, ${esc(kg(vMes.co2))} de CO₂ evitado.${vSeg > 1 ? ` ${vSeg} dias seguidos.` : ""} Desde ${esc(fmt(vDesde, {day:"numeric", month:"long", year:"numeric"}))}: ${vTot.dias} ${vTot.dias === 1 ? "dia" : "dias"} e <strong>${esc(kg(vTot.co2))}</strong> de CO₂.`;
+  $("#v-ontem-wrap").hidden = !!ve.dias[ontem()];
+  if (!$("#f-vegan").contains(document.activeElement)) $("#v-co2").value = ve.co2Dia;
+  $("#v-hist").textContent = historicoTxt(ve, v => `${num(v.co2Dia).toLocaleString("pt-PT")} kg por dia`);
+
   const dLongo = s => fmt(s, {day:"numeric", month:"long", year:"numeric"}), fDesde = Object.keys(fru.dias).sort()[0];
   $("#f-sub").textContent = fHoje ? "levantada hoje" : fUlt ? `última: ${fmt(fUlt)}` : `${num(fru.kg).toLocaleString("pt-PT")} kg por cesta`;
   $("#f-ult").textContent = fHoje ? "Hoje: levantada" : fUlt ? `Última: ${fmt(fUlt)}` : "";
@@ -895,6 +946,17 @@ $("#s-usei").addEventListener("click", () => usarSanita(1).then(r => { if (r !==
 $("#s-desfazer").addEventListener("click", () => usarSanita(-1).catch(() => {}));
 $("#c-usei").addEventListener("click", () => usarComposto(1).then(r => { if (r !== "fila") toast(`Registado: ${kg(num(S.composto.litrosBalde) * KG_POR_L)} de restos fora do lixo.`); }, () => {}));
 $("#c-desfazer").addEventListener("click", () => usarComposto(-1).catch(() => {}));
+$("#v-usei").addEventListener("click", () => {
+  if (S.vegan.dias[hoje()]) return toast("Hoje já está marcado.");
+  marcarVegan(hoje(), true).then(r => { if (r !== "fila") toast(`Boa! ${kg(num(S.vegan.co2Dia))} de CO₂ evitado hoje.`); }, () => {});
+});
+$("#v-desfazer").addEventListener("click", () => marcarVegan(hoje(), false).catch(() => {}));
+$("#v-ontem").addEventListener("click", () => marcarVegan(ontem(), true).then(r => { if (r !== "fila") toast("Ontem ficou marcado como vegan."); }, () => {}));
+$("#f-vegan").addEventListener("submit", e => {
+  e.preventDefault();
+  const novos = {co2Dia: num($("#v-co2").value)}, corrigir = $("#v-corrigir").checked;
+  mutate(d => mudarValores(d.vegan, CAMPOS.vegan, novos, corrigir), "Dias vegan: valores").then(() => { $("#v-corrigir").checked = false; document.activeElement?.blur(); toast(corrigir ? "Guardado para todos os registos." : "Guardado a partir de hoje."); }, () => {});
+});
 $("#f-usei").addEventListener("click", () => usarFruta(1).then(r => { if (r !== "fila") toast(`Registado: ${kg(num(S.fruta.kg))} de fruta salva do desperdício.`); }, () => {}));
 $("#f-desfazer").addEventListener("click", () => usarFruta(-1).catch(() => {}));
 $("#f-fruta").addEventListener("submit", e => {
@@ -988,19 +1050,19 @@ $("#btn-desligar").addEventListener("click", () => {
   cfg = {repo: cfg.repo, token: ""}; ls.set("eco-cfg", cfg); renderCfg(); setStatus("Só neste navegador"); toast("Token apagado deste navegador.");
 });
 function baixar(blob, nome){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
-$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, fruta: S.fruta}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
+$("#btn-backup").addEventListener("click", () => baixar(new Blob([JSON.stringify({bicicleta: S.bicicleta, sanita: S.sanita, composto: S.composto, fruta: S.fruta, vegan: S.vegan}, null, 1)], {type:"application/json"}), `eco-${hoje()}.json`));
 
 /* ---------- start ---------- */
 $("#today").textContent = new Date().toLocaleDateString("pt-PT", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
 /* First visit: start from the Descomplica cache, which held these data before. */
-{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, composto: c.composto, fruta: c.fruta, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
+{ const c = ls.get("eco-cache") || ls.get("descomplica-cache") || {}; S = completo({bicicleta: c.bicicleta, sanita: c.sanita, composto: c.composto, fruta: c.fruta, vegan: c.vegan, _feitos: c._feitos || []}); fila().forEach(o => aplicar(S, o)); }
 metrica = ls.get("eco-metrica") || "euros";
 showTab(ls.get("eco-tab") || "resumo");
 renderCfg(); render(); estadoFila();
-/* App icon shortcuts (manifest): ?acao=sanita, ?acao=composto or ?acao=fruta registers one, then the address is cleaned so a reload does not count it again. */
+/* App icon shortcuts (manifest): ?acao=sanita, ?acao=composto, ?acao=fruta or ?acao=vegan registers one, then the address is cleaned so a reload does not count it again. */
 const acao = new URLSearchParams(location.search).get("acao");
 if (acao) history.replaceState(null, "", location.pathname);
-const depois = () => { const b = {sanita: "#s-usei", composto: "#c-usei", fruta: "#f-usei"}[acao]; if (b){ showTab("resumo"); $(b).click(); } };
+const depois = () => { const b = {sanita: "#s-usei", composto: "#c-usei", fruta: "#f-usei", vegan: "#v-usei"}[acao]; if (b){ showTab("resumo"); $(b).click(); } };
 if (online()) reload().then(depois); else depois();
 carregarHorta();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
